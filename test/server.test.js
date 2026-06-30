@@ -253,7 +253,7 @@ test("annotation card shadow styles use Lavish design-system variables", () => {
 test("chrome top bar uses an Annotate switch instead of a labeled toggle button", () => {
   const html = createChromeHtml({ key: "abc", file: "/tmp/artifact.html" });
 
-  assert.match(html, /class="annotate-switch" id="annotation"[^>]*aria-pressed="true"/);
+  assert.match(html, /class="annotate-switch" id="annotation"[^>]*aria-pressed="false"/);
   assert.match(html, /class="switch-track"/);
   assert.match(html, />Annotate</);
   assert.doesNotMatch(html, /Annotation: On/);
@@ -774,6 +774,92 @@ test("session URLs can disable the layout gate for one open", async () => {
     assert.match(chrome, /"layoutGateEnabled":false/);
   } finally {
     await server.close();
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("annotate mode is off by default in the chrome", () => {
+  const html = createChromeHtml({ key: "abc", file: "/tmp/artifact.html" });
+  assert.match(html, /id="annotation" type="button" aria-pressed="false"/);
+  assert.match(html, /"annotate":false/);
+});
+
+test("createChromeHtml renders annotate enabled when requested", () => {
+  const html = createChromeHtml({ key: "abc", file: "/tmp/artifact.html" }, { annotate: true });
+  assert.match(html, /id="annotation" type="button" aria-pressed="true"/);
+  assert.match(html, /"annotate":true/);
+});
+
+test("chrome-client initializes annotation from the session bootstrap, not hardcoded on", async () => {
+  const client = await chromeClientSource();
+  assert.match(client, /let annotation = sessionData\.annotate === true/);
+  assert.doesNotMatch(client, /let annotation = true;/);
+});
+
+test("a session defaults to annotate off end-to-end", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const artifact = path.join(dir, "artifact.html");
+  await writeFile(artifact, "<!doctype html><html><body></body></html>");
+  const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
+  try {
+    const res = await fetch(`http://127.0.0.1:${server.port}/api/sessions`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ file: artifact }),
+    });
+    const body = await res.json();
+    const chrome = await (await fetch(body.url)).text();
+    assert.match(chrome, /id="annotation" type="button" aria-pressed="false"/);
+    assert.match(chrome, /"annotate":false/);
+  } finally {
+    await server.close();
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("--annotate opens a session with annotate on for one open", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const artifact = path.join(dir, "artifact.html");
+  await writeFile(artifact, "<!doctype html><html><body></body></html>");
+  const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
+  try {
+    const res = await fetch(`http://127.0.0.1:${server.port}/api/sessions`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ file: artifact, annotate: true }),
+    });
+    const body = await res.json();
+    assert.match(body.url, /[?&]annotate=1/);
+    const chrome = await (await fetch(body.url)).text();
+    assert.match(chrome, /id="annotation" type="button" aria-pressed="true"/);
+    assert.match(chrome, /"annotate":true/);
+  } finally {
+    await server.close();
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("LAVISH_AXI_ANNOTATE=on flips the default to annotate on", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const artifact = path.join(dir, "artifact.html");
+  await writeFile(artifact, "<!doctype html><html><body></body></html>");
+  const previous = process.env.LAVISH_AXI_ANNOTATE;
+  process.env.LAVISH_AXI_ANNOTATE = "on";
+  const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
+  try {
+    const res = await fetch(`http://127.0.0.1:${server.port}/api/sessions`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ file: artifact }),
+    });
+    const body = await res.json();
+    const chrome = await (await fetch(body.url)).text();
+    assert.match(chrome, /id="annotation" type="button" aria-pressed="true"/);
+    assert.match(chrome, /"annotate":true/);
+  } finally {
+    await server.close();
+    if (previous === undefined) delete process.env.LAVISH_AXI_ANNOTATE;
+    else process.env.LAVISH_AXI_ANNOTATE = previous;
     await rm(dir, { recursive: true, force: true });
   }
 });

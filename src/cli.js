@@ -170,8 +170,9 @@ async function openCommand(args) {
   await assertHtmlFile(file);
   const absolute = await canonicalFile(file);
   const noGate = args.includes("--no-gate");
+  const annotate = resolveAnnotateFlag(args);
   const baseUrl = await ensureServer({ forceRestart: shouldForceRestartForLocalBuild(process.argv[1] || "") });
-  const response = await postJson(`${baseUrl}/api/sessions`, { file: absolute, noGate });
+  const response = await postJson(`${baseUrl}/api/sessions`, { file: absolute, noGate, annotate });
   if (shouldOpenBrowser(args, process.env)) {
     try {
       const open = (await import("open")).default;
@@ -185,6 +186,12 @@ async function openCommand(args) {
 
 export function shouldOpenBrowser(args, env) {
   return !args.includes("--no-open") && env.LAVISH_AXI_NO_OPEN !== "1";
+}
+
+export function resolveAnnotateFlag(args) {
+  if (args.includes("--no-annotate")) return false;
+  if (args.includes("--annotate")) return true;
+  return undefined;
 }
 
 async function pollCommand(args) {

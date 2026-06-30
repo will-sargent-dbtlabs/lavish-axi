@@ -92,7 +92,10 @@ export async function serve({
       const file = await canonicalFile(req.body.file);
       const key = sessionKey(file);
       const sessionUrl = `http://${hostForUrl(linkHostName)}:${publicPort}/session/${key}`;
-      const url = shouldDisableLayoutGateOpen(req.body || {}) ? appendNoGateParam(sessionUrl) : sessionUrl;
+      let url = shouldDisableLayoutGateOpen(req.body || {}) ? appendNoGateParam(sessionUrl) : sessionUrl;
+      const annotateFlag = (req.body || {}).annotate;
+      if (isTruthyFlag(annotateFlag)) url = appendAnnotateParam(url, "1");
+      else if (isFalseyFlag(annotateFlag)) url = appendAnnotateParam(url, "0");
       const existing = await store.findByKey(key);
       const session = await store.upsertSession(file, sessionUrl);
       if (existing?.status === "ended") {
@@ -259,7 +262,12 @@ export async function serve({
         return;
       }
       await watchSession(session, watchers, events, logEvent);
-      res.type("html").send(createChromeHtml(session, { layoutGateEnabled: shouldEnableLayoutGate(req.query || {}) }));
+      res.type("html").send(
+        createChromeHtml(session, {
+          layoutGateEnabled: shouldEnableLayoutGate(req.query || {}),
+          annotate: shouldEnableAnnotate(req.query || {}),
+        }),
+      );
     } catch (error) {
       next(error);
     }
@@ -661,6 +669,24 @@ function appendNoGateParam(url) {
   return parsed.toString();
 }
 
+export function shouldEnableAnnotate(query = {}, env = process.env) {
+  const flag = query.annotate ?? query.annotation;
+  if (isTruthyFlag(flag)) return true;
+  if (isFalseyFlag(flag)) return false;
+
+  const envFlag = env?.LAVISH_AXI_ANNOTATE;
+  if (isTruthyFlag(envFlag)) return true;
+  if (isFalseyFlag(envFlag)) return false;
+
+  return false;
+}
+
+function appendAnnotateParam(url, value) {
+  const parsed = new URL(url);
+  parsed.searchParams.set("annotate", value);
+  return parsed.toString();
+}
+
 function isTruthyFlag(value) {
   const normalized = normalizeFlagValue(value);
   return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
@@ -676,12 +702,13 @@ function normalizeFlagValue(value) {
   return value === undefined || value === null ? "" : String(value).trim().toLowerCase();
 }
 
-export function createChromeHtml(session, { layoutGateEnabled = true } = {}) {
+export function createChromeHtml(session, { layoutGateEnabled = true, annotate = false } = {}) {
   const sessionJson = jsonScript({
     key: session.key,
     file: session.file,
     initialChat: session.chat || [],
     layoutGateEnabled,
+    annotate,
   });
   const { head: pathHead, tail: pathTail } = displayPathParts(session.file);
   const bodyClass = layoutGateEnabled ? "lavish layout-gate-active" : "lavish";
@@ -695,7 +722,7 @@ export function createChromeHtml(session, { layoutGateEnabled = true } = {}) {
 <link rel="stylesheet" href="/chrome.css">
 </head>
 <body class="${bodyClass}">
-<div class="bar"><div class="brand"><span class="brand-mark">Lavish</span><span class="brand-support">Editor</span></div><div class="spacer" aria-hidden="true"></div><button class="annotate-switch" id="annotation" type="button" aria-pressed="true"><span class="switch-track" aria-hidden="true"><span class="switch-knob"></span></span><span>Annotate</span></button><div class="more-wrap" id="moreWrap"><button class="more-button" id="moreButton" type="button" title="More" aria-haspopup="menu" aria-expanded="false">${chromeIcons.more}</button><div class="menu more-menu" id="moreMenu" hidden><div class="menu-head"><div class="menu-label">Editing</div><button class="menu-file" id="copyPath" type="button" title="Copy path · ${escapeHtml(session.file)}">${chromeIcons.file}<span class="menu-file-text"><span class="path-head">${escapeHtml(pathHead)}</span><span class="path-tail">${escapeHtml(pathTail)}</span></span><span class="copy-hint" id="copyHint"><span class="icon-copy">${chromeIcons.copy}</span><span class="icon-check">${chromeIcons.check}</span><span id="copyHintText">Copy</span></span></button></div><div class="menu-rule"></div><button class="menu-item" id="reloadArtifact" type="button">${chromeIcons.refresh}<span>Reload artifact</span></button><button class="menu-item" id="copySnapshot" type="button">${chromeIcons.camera}<span>Copy DOM snapshot</span></button><div class="menu-rule"></div><button class="menu-item danger" id="end" type="button">${chromeIcons.exit}<span>End session</span></button></div></div></div>
+<div class="bar"><div class="brand"><span class="brand-mark">Lavish</span><span class="brand-support">Editor</span></div><div class="spacer" aria-hidden="true"></div><button class="annotate-switch" id="annotation" type="button" aria-pressed="${annotate ? "true" : "false"}"><span class="switch-track" aria-hidden="true"><span class="switch-knob"></span></span><span>Annotate</span></button><div class="more-wrap" id="moreWrap"><button class="more-button" id="moreButton" type="button" title="More" aria-haspopup="menu" aria-expanded="false">${chromeIcons.more}</button><div class="menu more-menu" id="moreMenu" hidden><div class="menu-head"><div class="menu-label">Editing</div><button class="menu-file" id="copyPath" type="button" title="Copy path · ${escapeHtml(session.file)}">${chromeIcons.file}<span class="menu-file-text"><span class="path-head">${escapeHtml(pathHead)}</span><span class="path-tail">${escapeHtml(pathTail)}</span></span><span class="copy-hint" id="copyHint"><span class="icon-copy">${chromeIcons.copy}</span><span class="icon-check">${chromeIcons.check}</span><span id="copyHintText">Copy</span></span></button></div><div class="menu-rule"></div><button class="menu-item" id="reloadArtifact" type="button">${chromeIcons.refresh}<span>Reload artifact</span></button><button class="menu-item" id="copySnapshot" type="button">${chromeIcons.camera}<span>Copy DOM snapshot</span></button><div class="menu-rule"></div><button class="menu-item danger" id="end" type="button">${chromeIcons.exit}<span>End session</span></button></div></div></div>
 <div class="layout"><div class="frame"><iframe id="artifact" sandbox="allow-scripts allow-forms allow-popups allow-downloads" data-artifact-src="/artifact/${session.key}/index.html"></iframe><div class="layout-issue-banner" id="layoutIssueBanner" hidden>This surface may have layout issues. Your agent has been notified.</div></div><aside class="panel"><h2>Conversation</h2><div class="chat" id="chatLog"></div><div class="composer"><div class="presence-banner" id="presenceBanner" hidden>Your agent is not listening. If this persists, ask your agent to poll for updates from Lavish.</div><div class="annotation-pills" id="annotationPills"></div><textarea id="chatInput" placeholder="Write a message for the agent..."></textarea><div class="actions" id="sendActions"><span class="send-hint" id="sendHint" hidden>Write a message or annotate an element first.</span><div class="split"><button class="button send-main" id="send">Send to Agent</button><button class="button send-caret" id="sendCaret" type="button" title="Send options" aria-haspopup="menu" aria-expanded="false">${chromeIcons.caret}</button></div><div class="menu send-menu" id="sendMenu" hidden><button class="menu-item" id="sendFromMenu" type="button">${chromeIcons.send}<span>Send to Agent</span></button><button class="menu-item danger" id="sendAndEnd" type="button">${chromeIcons.exit}<span>Send &amp; end session</span></button></div></div></div></aside></div>
 <div class="ended-overlay layout-gate-overlay" id="layoutGateOverlay"${layoutGateHidden}><div class="ended-card"><div class="ended-title" id="layoutGateTitle">Checking layout.<br>One moment.</div><p class="ended-copy" id="layoutGateCopy">Lavish is waiting for fonts and final geometry before revealing this artifact.</p><button class="button ended-action" id="layoutGateAction" type="button">Show anyway</button></div></div>
 <div class="ended-overlay" id="endedOverlay" hidden><div class="ended-card"><div class="ended-title">Session ended.<br>Return to your agent to continue.</div><p class="ended-copy">${escapeHtml(session.file)}</p></div></div>

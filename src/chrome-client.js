@@ -39,7 +39,7 @@ const sendHint = /** @type {HTMLSpanElement} */ (document.getElementById("sendHi
 const artifactSrc = frame.dataset.artifactSrc || frame.getAttribute?.("data-artifact-src") || frame.src || "";
 
 const queued = loadQueuedPrompts();
-let annotation = true;
+let annotation = sessionData.annotate === true;
 let ended = false;
 let agentPresence = "waiting";
 let pendingSnapshot = "";

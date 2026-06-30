@@ -27,6 +27,7 @@ import {
   pollInterruptedText,
   pollWaitBannerText,
   pollWaitTickText,
+  resolveAnnotateFlag,
   resolveCopilotHookDir,
   resolveHookHomeDir,
   resolveServerEntry,
@@ -935,4 +936,17 @@ test("stop command reports when no server is running", async () => {
   } finally {
     await rm(dir, { force: true, recursive: true });
   }
+});
+
+test("resolveAnnotateFlag is undefined when no annotate flag is present", () => {
+  assert.equal(resolveAnnotateFlag(["report.html"]), undefined);
+});
+
+test("resolveAnnotateFlag reads --annotate and --no-annotate", () => {
+  assert.equal(resolveAnnotateFlag(["--annotate", "report.html"]), true);
+  assert.equal(resolveAnnotateFlag(["--no-annotate", "report.html"]), false);
+});
+
+test("resolveAnnotateFlag lets --no-annotate win when both are present", () => {
+  assert.equal(resolveAnnotateFlag(["--annotate", "--no-annotate", "report.html"]), false);
 });
