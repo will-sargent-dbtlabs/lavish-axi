@@ -931,6 +931,14 @@ test("chrome-client initializes annotation from the session bootstrap, not hardc
   assert.doesNotMatch(client, /let annotation = true;/);
 });
 
+test("chrome-client applies the bootstrap theme and wires the theme switcher", async () => {
+  const client = await chromeClientSource();
+  assert.match(client, /const themeStorageKey = "lavish-axi:theme:" \+ key;/);
+  assert.match(client, /document\.documentElement\.dataset\.lavishTheme = themeId;/);
+  assert.match(client, /sessionStorage\.getItem\(themeStorageKey\)/);
+  assert.match(client, /sessionStorage\.setItem\(themeStorageKey, value\)/);
+});
+
 test("a session defaults to annotate off end-to-end", async () => {
   const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
   const artifact = path.join(dir, "artifact.html");

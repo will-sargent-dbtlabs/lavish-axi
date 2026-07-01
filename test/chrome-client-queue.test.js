@@ -143,6 +143,7 @@ async function createChromeHarness({
       }
     },
     document: {
+      documentElement: element("html"),
       body: element("body"),
       getElementById(id) {
         return element(id);
@@ -155,6 +156,9 @@ async function createChromeHarness({
       },
       execCommand() {
         return true;
+      },
+      querySelectorAll() {
+        return [];
       },
     },
     sessionStorage: {

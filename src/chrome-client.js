@@ -41,6 +41,29 @@ const artifactSrc = frame.dataset.artifactSrc || frame.getAttribute?.("data-arti
 
 const queued = loadQueuedPrompts();
 let annotation = sessionData.annotate === true;
+const themeStorageKey = "lavish-axi:theme:" + key;
+
+function applyTheme(themeId) {
+  document.documentElement.dataset.lavishTheme = themeId;
+  document.querySelectorAll(".theme-swatch").forEach((element) => {
+    const button = /** @type {HTMLElement} */ (element);
+    button.setAttribute("aria-pressed", String(button.dataset.themeValue === themeId));
+  });
+}
+
+function initTheme() {
+  let themeId = typeof sessionData.theme === "string" ? sessionData.theme : "lavish-light";
+  try {
+    const stored = sessionStorage.getItem(themeStorageKey);
+    if (stored) themeId = stored;
+  } catch {
+    // sessionStorage can be unavailable (e.g. private browsing); the
+    // server-resolved theme from the bootstrap JSON still applies.
+  }
+  applyTheme(themeId);
+}
+
+initTheme();
 let ended = false;
 let agentPresence = "waiting";
 let pendingSnapshot = "";
@@ -577,6 +600,19 @@ copyPathButton.onclick = copyFilePath;
 reloadArtifactButton.onclick = reloadArtifact;
 copySnapshotButton.onclick = copyDomSnapshot;
 printArtifactButton.onclick = () => window.open(`/print/${key}`, "_blank");
+document.querySelectorAll(".theme-swatch").forEach((element) => {
+  const button = /** @type {HTMLElement} */ (element);
+  button.addEventListener("click", () => {
+    const value = button.dataset.themeValue;
+    if (!value) return;
+    applyTheme(value);
+    try {
+      sessionStorage.setItem(themeStorageKey, value);
+    } catch {
+      // Best-effort only; the theme still applies for the current page view.
+    }
+  });
+});
 endButton.onclick = () => {
   closeMenus();
   endSession();
