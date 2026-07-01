@@ -7,7 +7,7 @@ import chokidar from "chokidar";
 import express from "express";
 
 import { createArtifactSdk, deriveLavishQueueKey, isNativeInteractiveControl } from "./artifact-sdk.js";
-import { injectLavishSdk } from "./html-transform.js";
+import { injectLavishSdk, injectPrintScript } from "./html-transform.js";
 import { bindHost, hostForUrl, linkHost } from "./paths.js";
 import { canonicalFile, SessionStore, sessionKey } from "./session-store.js";
 
@@ -293,6 +293,46 @@ export async function serve({
   });
 
   app.get(/^\/artifact\/([^/]+)\/(.+)$/, async (req, res, next) => {
+    try {
+      const key = req.params[0];
+      const assetPath = req.params[1];
+      const session = await store.findByKey(key);
+      if (!session) {
+        res.status(404).send("Session not found");
+        return;
+      }
+      const root = path.dirname(session.file);
+      const file = resolveArtifactAsset(root, assetPath);
+      if (!file) {
+        res.status(403).send("Forbidden");
+        return;
+      }
+      res.sendFile(file, { dotfiles: "allow" });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/print/:key", (req, res) => {
+    res.redirect(`/print/${req.params.key}/index.html`);
+  });
+
+  app.get(/^\/print\/([^/]+)\/index\.html$/, async (req, res, next) => {
+    try {
+      const key = req.params[0];
+      const session = await store.findByKey(key);
+      if (!session) {
+        res.status(404).send("Session not found");
+        return;
+      }
+      const html = await readFile(session.file, "utf8");
+      res.type("html").send(injectPrintScript(html));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get(/^\/print\/([^/]+)\/(.+)$/, async (req, res, next) => {
     try {
       const key = req.params[0];
       const assetPath = req.params[1];

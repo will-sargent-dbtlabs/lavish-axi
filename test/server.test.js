@@ -921,6 +921,80 @@ test("/artifact serves files copied under the artifact directory", async () => {
   }
 });
 
+test("/print/:key serves the artifact as a top-level page with an auto-print script, not the Lavish SDK", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const artifact = path.join(dir, "artifact.html");
+  await writeFile(artifact, "<!doctype html><html><body><h1>Full content</h1></body></html>");
+  const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
+  try {
+    const base = `http://127.0.0.1:${server.port}`;
+    const sessionRes = await fetch(`${base}/api/sessions`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ file: artifact }),
+    });
+    const session = await sessionRes.json();
+
+    const redirect = await fetch(`${base}/print/${session.key}`, { redirect: "manual" });
+    assert.equal(redirect.status, 302);
+    assert.match(redirect.headers.get("location") || "", /\/print\/.+\/index\.html$/);
+
+    const printPage = await fetch(`${base}/print/${session.key}/index.html`);
+    const html = await printPage.text();
+    assert.equal(printPage.status, 200);
+    assert.match(html, /<h1>Full content<\/h1>/);
+    assert.match(html, /window\.print\(\)/);
+    assert.doesNotMatch(html, /\/sdk\.js\?key=/);
+  } finally {
+    await server.close();
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("/print/:key/<path> serves sibling assets so relative paths resolve without rewriting", async () => {
+  const parent = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const dir = path.join(parent, ".lavish");
+  const assetDir = path.join(dir, "assets");
+  const artifact = path.join(dir, "artifact.html");
+  await mkdir(dir);
+  await mkdir(assetDir);
+  await writeFile(
+    artifact,
+    '<!doctype html><html><head><link rel="stylesheet" href="assets/style.css"></head><body><h1>Hi</h1></body></html>',
+  );
+  await writeFile(path.join(assetDir, "style.css"), "body { color: rgb(1 2 3); }\n");
+  const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
+  try {
+    const base = `http://127.0.0.1:${server.port}`;
+    const sessionRes = await fetch(`${base}/api/sessions`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ file: artifact }),
+    });
+    const session = await sessionRes.json();
+
+    const css = await fetch(`${base}/print/${session.key}/assets/style.css`);
+    assert.equal(css.status, 200);
+    assert.equal(await css.text(), "body { color: rgb(1 2 3); }\n");
+  } finally {
+    await server.close();
+    await rm(parent, { recursive: true, force: true });
+  }
+});
+
+test("/print/:key returns 404 for an unknown session", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
+  try {
+    const base = `http://127.0.0.1:${server.port}`;
+    const res = await fetch(`${base}/print/does-not-exist/index.html`);
+    assert.equal(res.status, 404);
+  } finally {
+    await server.close();
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("layout warnings wake the same long-poll feedback channel as human prompts", async () => {
   const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
   const artifact = path.join(dir, "artifact.html");
