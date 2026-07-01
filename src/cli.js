@@ -171,8 +171,9 @@ async function openCommand(args) {
   const absolute = await canonicalFile(file);
   const noGate = args.includes("--no-gate");
   const annotate = resolveAnnotateFlag(args);
+  const theme = resolveThemeFlag(args);
   const baseUrl = await ensureServer({ forceRestart: shouldForceRestartForLocalBuild(process.argv[1] || "") });
-  const response = await postJson(`${baseUrl}/api/sessions`, { file: absolute, noGate, annotate });
+  const response = await postJson(`${baseUrl}/api/sessions`, { file: absolute, noGate, annotate, theme });
   if (shouldOpenBrowser(args, process.env)) {
     try {
       const open = (await import("open")).default;
@@ -192,6 +193,10 @@ export function resolveAnnotateFlag(args) {
   if (args.includes("--no-annotate")) return false;
   if (args.includes("--annotate")) return true;
   return undefined;
+}
+
+export function resolveThemeFlag(args) {
+  return flagValue(args, "--theme") || undefined;
 }
 
 async function pollCommand(args) {
@@ -777,10 +782,10 @@ export function getCommandHelp(command) {
   return COMMAND_HELP[command] || null;
 }
 
-const TOP_LEVEL_HELP = `lavish-axi - Lavish Editor AXI\n\nUsage:\n  lavish-axi\n  lavish-axi <html-file> [--no-open] [--no-gate]\n  lavish-axi poll <html-file> [--agent-reply "..."]\n  lavish-axi end <html-file>\n  lavish-axi stop\n  lavish-axi playbook [playbook_id]\n  lavish-axi design\n  lavish-axi setup hooks\n\n${DESIGN_SYSTEM_HINT}\n\nNote: poll long-polls indefinitely by default until the user sends feedback, ends the session, or the browser reports fresh layout_warnings, staying silent while it waits - never kill it. Fix layout_warnings before involving the human. Do not pass --timeout-ms during normal agent use; it is for tests and debugging only. If your harness limits how long a foreground command may run, run the poll as a background task; if it gets killed or times out anyway, just re-run it - queued feedback is never lost.\n\n`;
+const TOP_LEVEL_HELP = `lavish-axi - Lavish Editor AXI\n\nUsage:\n  lavish-axi\n  lavish-axi <html-file> [--no-open] [--no-gate] [--theme <id>]\n  lavish-axi poll <html-file> [--agent-reply "..."]\n  lavish-axi end <html-file>\n  lavish-axi stop\n  lavish-axi playbook [playbook_id]\n  lavish-axi design\n  lavish-axi setup hooks\n\n${DESIGN_SYSTEM_HINT}\n\n\`--theme <id>\` (or LAVISH_AXI_THEME) sets the chrome's visual theme for this open; valid ids are lavish-light (default), midnight, and swiss.\n\nNote: poll long-polls indefinitely by default until the user sends feedback, ends the session, or the browser reports fresh layout_warnings, staying silent while it waits - never kill it. Fix layout_warnings before involving the human. Do not pass --timeout-ms during normal agent use; it is for tests and debugging only. If your harness limits how long a foreground command may run, run the poll as a background task; if it gets killed or times out anyway, just re-run it - queued feedback is never lost.\n\n`;
 
 const COMMAND_HELP = {
-  open: `Usage: lavish-axi <html-file> [--no-open] [--no-gate]\n\nOpen or resume a Lavish Editor review session for an HTML artifact. Use --no-open when you need to ensure the server/session exists without opening another browser window. Use --no-gate to skip the open-time layout curtain for this browser open.\n`,
+  open: `Usage: lavish-axi <html-file> [--no-open] [--no-gate] [--theme <id>]\n\nOpen or resume a Lavish Editor review session for an HTML artifact. Use --no-open when you need to ensure the server/session exists without opening another browser window. Use --no-gate to skip the open-time layout curtain for this browser open. Use --theme <id> (or LAVISH_AXI_THEME) to set the chrome's visual theme for this open; valid ids are lavish-light (default), midnight, and swiss.\n`,
   poll: `Usage: lavish-axi poll <html-file> [--agent-reply "..."]\n\nThis command long-polls indefinitely for queued user prompts and browser-reported layout_warnings, then returns them to the agent. It stays silent while it waits - that is normal, never kill it. Fix layout_warnings before involving the human. Do not pass --timeout-ms during normal agent use; it is for tests and debugging only. If your harness limits how long a foreground command may run, run the poll as a background task and wait for it to finish; if it still gets killed or times out, just re-run it - queued feedback is never lost. Use --agent-reply after applying prior feedback to display your response in Lavish Editor before waiting again.\n`,
   end: `Usage: lavish-axi end <html-file>\n\nEnd a Lavish Editor session.\n`,
   stop: `Usage: lavish-axi stop [--port <port>]\n\nShut down the background Lavish Editor server. The server also stops itself when no browser or poll has been connected for a while (LAVISH_AXI_IDLE_TIMEOUT_MS, default 30m) and immediately when the last session ends with nothing connected.\n`,

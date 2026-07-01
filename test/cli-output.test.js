@@ -31,6 +31,7 @@ import {
   resolveCopilotHookDir,
   resolveHookHomeDir,
   resolveServerEntry,
+  resolveThemeFlag,
   shutdownServerOnPort,
   shouldForceRestartForLocalBuild,
   shouldKillProcessOnPort,
@@ -949,4 +950,12 @@ test("resolveAnnotateFlag reads --annotate and --no-annotate", () => {
 
 test("resolveAnnotateFlag lets --no-annotate win when both are present", () => {
   assert.equal(resolveAnnotateFlag(["--annotate", "--no-annotate", "report.html"]), false);
+});
+
+test("resolveThemeFlag is undefined when no --theme flag is present", () => {
+  assert.equal(resolveThemeFlag(["report.html"]), undefined);
+});
+
+test("resolveThemeFlag reads the value after --theme", () => {
+  assert.equal(resolveThemeFlag(["--theme", "swiss", "report.html"]), "swiss");
 });
