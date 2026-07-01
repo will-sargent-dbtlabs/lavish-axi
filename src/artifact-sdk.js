@@ -761,7 +761,10 @@ export function createArtifactSdk(deriveQueueKey, isNativeInteractive = isNative
       document.documentElement.dataset.lavishContentTheme = msg.id;
     }
     if (msg.type === "lavish:requestContentExport") {
-      const html = "<!doctype html>\n" + document.documentElement.outerHTML;
+      const clone = /** @type {HTMLElement} */ (document.documentElement.cloneNode(true));
+      const sdkScript = clone.querySelector('script[src*="/sdk.js"]');
+      if (sdkScript) sdkScript.remove();
+      const html = "<!doctype html>\n" + clone.outerHTML;
       parent.postMessage({ type: "lavish:contentExport", html }, "*");
     }
   });

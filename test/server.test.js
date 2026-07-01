@@ -241,8 +241,15 @@ test("artifact SDK applies a requested content theme by setting the root data at
 test("artifact SDK exports a full standalone HTML snapshot on request", () => {
   const js = createSdkJs("abc");
   assert.match(js, /msg\.type === "lavish:requestContentExport"/);
-  assert.match(js, /const html = "<!doctype html>\\n" \+ document\.documentElement\.outerHTML;/);
+  assert.match(js, /const html = "<!doctype html>\\n" \+ clone\.outerHTML;/);
   assert.match(js, /parent\.postMessage\(\{ type: "lavish:contentExport", html \}, "\*"\)/);
+});
+
+test("artifact SDK strips its own injected script tag from the exported snapshot", () => {
+  const js = createSdkJs("abc");
+  assert.match(js, /document\.documentElement\.cloneNode\(true\)/);
+  assert.match(js, /clone\.querySelector\('script\[src\*="\/sdk\.js"\]'\)/);
+  assert.match(js, /if \(sdkScript\) sdkScript\.remove\(\);/);
 });
 
 test("artifact SDK shows native cursors on form controls in annotation mode", () => {
