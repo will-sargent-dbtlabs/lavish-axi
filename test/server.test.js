@@ -269,6 +269,30 @@ test("annotate switch shows a brass track and ink knob when enabled", async () =
   assert.match(js, /annotationSwitch\.setAttribute\("aria-pressed", String\(annotation\)\)/);
 });
 
+test("chrome.css defines a lavish-light theme override with a near-white background", async () => {
+  const css = await chromeCssSource();
+  assert.match(css, /:root\[data-lavish-theme="lavish-light"\]\{[^}]*--bg:#fcfcfa/);
+});
+
+test("chrome.css defines a swiss theme override with near-black ink and hairlines", async () => {
+  const css = await chromeCssSource();
+  assert.match(css, /:root\[data-lavish-theme="swiss"\]\{[^}]*--fg:#0a0a0a/);
+  assert.match(css, /:root\[data-lavish-theme="swiss"\]\{[^}]*--border:#0a0a0a/);
+});
+
+test("menu hover states use the themeable --hover-bg variable, not a raw palette color", async () => {
+  const css = await chromeCssSource();
+  assert.doesNotMatch(css, /\.menu-item:hover:not\(:disabled\)\{background:var\(--steel-700\)/);
+  assert.match(css, /\.menu-item:hover:not\(:disabled\)\{background:var\(--hover-bg\)/);
+  assert.doesNotMatch(css, /\.menu-file:hover\{background:var\(--steel-700\)/);
+  assert.match(css, /\.menu-file:hover\{background:var\(--hover-bg\)/);
+});
+
+test("theme swatch buttons get an accent border when pressed", async () => {
+  const css = await chromeCssSource();
+  assert.match(css, /\.theme-swatch\[aria-pressed="true"\]\{[^}]*border-color:var\(--accent\)/);
+});
+
 test("chrome declares the Lavish design-system tokens", async () => {
   const css = await chromeCssSource();
 

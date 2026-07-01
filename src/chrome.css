@@ -103,6 +103,50 @@
   --dur-slow: 320ms;
   --annotate-outline: 2px solid var(--accent);
   --annotate-offset: 2px;
+  --hover-bg: var(--steel-700);
+}
+/* The base :root block above is the "midnight" theme (the original dark
+   palette) and stays the fallback if data-lavish-theme is ever absent.
+   These two blocks override the same semantic variables - never the raw
+   palette tokens (--ink-900, --steel-700, etc.) - with values captured
+   from the matching bundled artifact theme in the lavish-themes fork. */
+:root[data-lavish-theme="lavish-light"] {
+  --bg: #fcfcfa;
+  --bg-panel: #f5f4ef;
+  --bg-bar: #f7f6f2;
+  --bg-elevated: #efeee7;
+  --fg: #2b2b2b;
+  --fg-muted: #45443f;
+  --fg-dim: #6b6b66;
+  --fg-faint: #8a8980;
+  --fg-label: #9a9990;
+  --border: #d6d6d0;
+  --border-subtle: #e6e5df;
+  --border-strong: #b9b8b0;
+  --accent: #e30613;
+  --accent-hover: #c40510;
+  --accent-ink: #fcfcfa;
+  --danger: #b3211c;
+  --hover-bg: #efeee7;
+}
+:root[data-lavish-theme="swiss"] {
+  --bg: #fafaf7;
+  --bg-panel: #f0f0ec;
+  --bg-bar: #f3f3ef;
+  --bg-elevated: #e8e8e2;
+  --fg: #0a0a0a;
+  --fg-muted: #1a1a1a;
+  --fg-dim: #5a5a55;
+  --fg-faint: #7a7a72;
+  --fg-label: #8a8a80;
+  --border: #0a0a0a;
+  --border-subtle: #d4d4cc;
+  --border-strong: #0a0a0a;
+  --accent: #e30613;
+  --accent-hover: #c40510;
+  --accent-ink: #fafaf7;
+  --danger: #b3211c;
+  --hover-bg: #e8e8e2;
 }
 * {
   box-sizing: border-box;
@@ -234,7 +278,7 @@ body.lavish {
 .more-button:hover:not(:disabled),
 .more-button[aria-expanded="true"] {
   border-color: var(--border-strong);
-  background: var(--steel-700);
+  background: var(--hover-bg);
   color: var(--fg);
 }
 .more-button:disabled {
@@ -286,7 +330,7 @@ body.lavish {
   color: var(--fg-muted);
 }
 .menu-file:hover {
-  background: var(--steel-700);
+  background: var(--hover-bg);
 }
 .menu-file > svg {
   opacity: 0.7;
@@ -358,7 +402,7 @@ body.lavish {
   color: var(--fg);
 }
 .menu-item:hover:not(:disabled) {
-  background: var(--steel-700);
+  background: var(--hover-bg);
 }
 .menu-item:disabled {
   cursor: not-allowed;
@@ -376,6 +420,49 @@ body.lavish {
 }
 .menu-item.danger:hover:not(:disabled) {
   background: rgba(240, 100, 100, 0.1);
+}
+.menu-themes {
+  display: flex;
+  gap: 6px;
+  padding: 0 4px 4px;
+}
+.theme-swatch {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 10px;
+  color: var(--fg-muted);
+}
+.theme-swatch:hover {
+  background: var(--hover-bg);
+}
+.theme-swatch[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--fg);
+}
+.swatch-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+}
+.swatch-dot[data-swatch="lavish-light"] {
+  background: #fcfcfa;
+}
+.swatch-dot[data-swatch="midnight"] {
+  background: #11141a;
+}
+.swatch-dot[data-swatch="swiss"] {
+  background: #fafaf7;
+  border-color: #0a0a0a;
 }
 .button {
   border: 0;
