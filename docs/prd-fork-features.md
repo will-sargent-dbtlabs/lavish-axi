@@ -149,6 +149,28 @@ Medium — self-contained new route + a one-option change to the transform. Like
 
 ---
 
+## Feature 4 — live content re-theming + standalone export ✅ DONE
+
+### Status
+
+Implemented on branch `feat/content-theme-switcher`.
+
+### What was built
+
+Content theming is an **opt-in contract**, not a lavish-axi-side registry — the tool has no hardcoded knowledge of any theme's palette. An artifact declares its own swappable palettes via a `#lavish-content-themes` JSON manifest plus `:root[data-lavish-content-theme="..."]` CSS override blocks (the same technique proven in `src/chrome.css` for the chrome itself). `src/artifact-sdk.js` detects the manifest and reports it to the chrome, applies switches by setting a `data-lavish-content-theme` attribute inside the sandboxed iframe, and replies to an export request with a full `outerHTML` snapshot with its own injected `sdk.js` script tag stripped out (found and fixed during live verification — otherwise the "standalone" export still depended on a running Lavish server). `src/chrome-client.js` renders a "Content Theme" menu section only when an artifact opts in, remembers the pick in `sessionStorage` (never `state.json`), and offers "Export standalone copy" — a client-side `Blob` download, no server route involved. `lavish-light` and `swiss` in `will-sargent-dbtlabs/lavish-themes` are the first reference implementation, since they already share a compatible variable scheme. Verified live: content theme switches independently of the chrome's own theme, survives an artifact reload via `sessionStorage`, and the exported file renders identically when opened standalone with no server running.
+
+## Feature 5 — retrofit all bundled themes onto one shared variable scheme (future, not started)
+
+### Problem
+
+Feature 4's live re-theming only works between themes that happen to share both a CSS variable contract and compatible structural markup. Today that's just the `lavish-light`/`swiss` pair. The other six bundled themes (`terminal`, `water`, `zine`, `handwritten`, `latex`, `dbt-brief`/`dbt-brief-dashboard`) each use entirely different variable names and DOM structure, so they can't participate without a rewrite.
+
+### Idea (not scoped or started)
+
+Rename every bundled theme's CSS custom properties in `will-sargent-dbtlabs/lavish-themes` onto one shared, role-based set (e.g. `--paper`/`--ink`/`--accent`/`--muted`/`--rule`), so any theme built from the bundled library becomes a candidate for cross-family live switching via Feature 4's existing mechanism — no changes needed to `lavish-axi` itself. This is a content-authoring investment, not a lavish-axi engineering task: it touches up to 8 theme files, needs careful visual regression checking per theme (screenshot before/after), and risks changing a theme's character if a role-based rename forces a design compromise a theme wasn't built to make (e.g. `zine`'s `--yellow`/`--magenta`/`--cyan` palette doesn't map cleanly onto a `paper`/`ink`/`accent` role scheme without flattening what makes it a "loud" theme). Deferred until there's a concrete need for cross-family switching beyond the `lavish-light`/`swiss` pair.
+
+---
+
 ## Pending before any feature merge
 
 - [x] Push `feat/annotate-off-by-default` to `origin` and open PR (merged via PR #3)

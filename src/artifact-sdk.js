@@ -307,6 +307,24 @@ export function createArtifactSdk(deriveQueueKey, isNativeInteractive = isNative
     parent.postMessage({ type: "lavish:endSession" }, "*");
   }
 
+  function readContentThemes() {
+    const script = document.getElementById("lavish-content-themes");
+    if (!script) return [];
+    try {
+      const parsed = JSON.parse(script.textContent || "[]");
+      return Array.isArray(parsed) ? parsed.filter((theme) => theme && typeof theme.id === "string") : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function reportContentThemes() {
+    const themes = readContentThemes();
+    if (!themes.length) return;
+    const current = document.documentElement.dataset.lavishContentTheme || "";
+    parent.postMessage({ type: "lavish:contentThemes", themes, current }, "*");
+  }
+
   function snapshot() {
     const lines = [];
 
@@ -739,7 +757,19 @@ export function createArtifactSdk(deriveQueueKey, isNativeInteractive = isNative
     if (msg.type === "lavish:restoreScroll") {
       window.scrollTo(Number(msg.x) || 0, Number(msg.y) || 0);
     }
+    if (msg.type === "lavish:setContentTheme" && typeof msg.id === "string") {
+      document.documentElement.dataset.lavishContentTheme = msg.id;
+    }
+    if (msg.type === "lavish:requestContentExport") {
+      const clone = /** @type {HTMLElement} */ (document.documentElement.cloneNode(true));
+      const sdkScript = clone.querySelector('script[src*="/sdk.js"]');
+      if (sdkScript) sdkScript.remove();
+      const html = "<!doctype html>\n" + clone.outerHTML;
+      parent.postMessage({ type: "lavish:contentExport", html }, "*");
+    }
   });
+
+  reportContentThemes();
 
   // Report scroll position to the chrome so it can be restored across hot reloads.
   // The iframe is sandboxed without same-origin, so the chrome can't read scrollY directly.

@@ -221,6 +221,37 @@ test("artifact SDK does not annotate text selected inside native controls", () =
   assert.match(js, /isInteractiveControl\(ancestor\)/);
 });
 
+test("artifact SDK posts its declared content themes and current selection to the chrome", () => {
+  const js = createSdkJs("abc");
+  assert.match(js, /getElementById\("lavish-content-themes"\)/);
+  assert.match(js, /parent\.postMessage\(\{ type: "lavish:contentThemes", themes, current \}, "\*"\)/);
+});
+
+test("artifact SDK does not post content themes when no manifest is declared", () => {
+  const js = createSdkJs("abc");
+  assert.match(js, /if \(!themes\.length\) return;/);
+});
+
+test("artifact SDK applies a requested content theme by setting the root data attribute", () => {
+  const js = createSdkJs("abc");
+  assert.match(js, /msg\.type === "lavish:setContentTheme" && typeof msg\.id === "string"/);
+  assert.match(js, /document\.documentElement\.dataset\.lavishContentTheme = msg\.id;/);
+});
+
+test("artifact SDK exports a full standalone HTML snapshot on request", () => {
+  const js = createSdkJs("abc");
+  assert.match(js, /msg\.type === "lavish:requestContentExport"/);
+  assert.match(js, /const html = "<!doctype html>\\n" \+ clone\.outerHTML;/);
+  assert.match(js, /parent\.postMessage\(\{ type: "lavish:contentExport", html \}, "\*"\)/);
+});
+
+test("artifact SDK strips its own injected script tag from the exported snapshot", () => {
+  const js = createSdkJs("abc");
+  assert.match(js, /document\.documentElement\.cloneNode\(true\)/);
+  assert.match(js, /clone\.querySelector\('script\[src\*="\/sdk\.js"\]'\)/);
+  assert.match(js, /if \(sdkScript\) sdkScript\.remove\(\);/);
+});
+
 test("artifact SDK shows native cursors on form controls in annotation mode", () => {
   const js = createSdkJs("abc");
 
@@ -837,6 +868,37 @@ test("the overflow menu lists all three bundled themes with only the active one 
   assert.match(html, /id="theme-lavish-light" type="button" data-theme-value="lavish-light" aria-pressed="false"/);
   assert.match(html, /id="theme-midnight" type="button" data-theme-value="midnight" aria-pressed="false"/);
   assert.match(html, /id="theme-swiss" type="button" data-theme-value="swiss" aria-pressed="true"/);
+});
+
+test("chrome reserves a hidden placeholder for the dynamically-populated content-theme menu section", () => {
+  const html = createChromeHtml({ key: "abc", file: "/tmp/artifact.html" });
+  assert.match(html, /<div id="contentThemeSection" hidden><\/div>/);
+});
+
+test("chrome-client renders a content-theme section and wires clicks when the artifact reports one", async () => {
+  const client = await chromeClientSource();
+  assert.match(client, /msg\.type === "lavish:contentThemes"/);
+  assert.match(client, /function renderContentThemeSection\(themes, current\)/);
+  assert.match(client, /postToFrame\(\{ type: "lavish:setContentTheme", id: value \}\)/);
+  assert.match(client, /sessionStorage\.setItem\(contentThemeStorageKey, value\)/);
+});
+
+test("chrome-client restores a stored content theme choice after an artifact reload", async () => {
+  const client = await chromeClientSource();
+  assert.match(client, /sessionStorage\.getItem\(contentThemeStorageKey\)/);
+  assert.match(client, /postToFrame\(\{ type: "lavish:setContentTheme", id: current \}\)/);
+});
+
+test("chrome-client downloads a themed export as a Blob when the artifact replies with content", async () => {
+  const client = await chromeClientSource();
+  assert.match(client, /msg\.type === "lavish:contentExport"/);
+  assert.match(client, /new Blob\(\[html\], \{ type: "text\/html" \}\)/);
+  assert.match(client, /link\.download = themedFileBaseName\(\) \+ "-themed\.html";/);
+});
+
+test("the export button requests a content export from the artifact", async () => {
+  const client = await chromeClientSource();
+  assert.match(client, /postToFrame\(\{ type: "lavish:requestContentExport" \}\)/);
 });
 
 test("a session defaults to the lavish-light theme end-to-end", async () => {
