@@ -64,6 +64,62 @@ function initTheme() {
 }
 
 initTheme();
+
+const contentThemeSection = /** @type {HTMLDivElement} */ (document.getElementById("contentThemeSection"));
+const contentThemeStorageKey = "lavish-axi:content-theme:" + key;
+
+function themedFileBaseName() {
+  const name = filePath.split("/").pop() || "artifact.html";
+  return name.replace(/\.html?$/i, "");
+}
+
+function downloadThemedCopy(html) {
+  if (!html) return;
+  const blob = new Blob([html], { type: "text/html" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = themedFileBaseName() + "-themed.html";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function renderContentThemeSection(themes, current) {
+  const buttonsHtml = themes
+    .map(
+      (theme) =>
+        `<button class="theme-swatch" type="button" data-content-theme-value="${escapeHtml(theme.id)}" aria-pressed="${theme.id === current ? "true" : "false"}">${escapeHtml(theme.label || theme.id)}</button>`,
+    )
+    .join("");
+  contentThemeSection.innerHTML =
+    '<div class="menu-head"><div class="menu-label">Content Theme</div></div><div class="menu-themes" role="group" aria-label="Content theme">' +
+    buttonsHtml +
+    '</div><button class="menu-item" id="exportThemedCopy" type="button"><span>Export standalone copy</span></button>';
+  contentThemeSection.hidden = false;
+
+  contentThemeSection.querySelectorAll(".theme-swatch").forEach((element) => {
+    const button = /** @type {HTMLElement} */ (element);
+    button.addEventListener("click", () => {
+      const value = button.dataset.contentThemeValue;
+      if (!value) return;
+      postToFrame({ type: "lavish:setContentTheme", id: value });
+      contentThemeSection.querySelectorAll(".theme-swatch").forEach((el) => {
+        el.setAttribute("aria-pressed", String(el === button));
+      });
+      try {
+        sessionStorage.setItem(contentThemeStorageKey, value);
+      } catch {
+        // Best-effort only; the theme still applies for the current page view.
+      }
+    });
+  });
+
+  const exportButton = /** @type {HTMLButtonElement} */ (document.getElementById("exportThemedCopy"));
+  exportButton.onclick = () => postToFrame({ type: "lavish:requestContentExport" });
+}
+
 let ended = false;
 let agentPresence = "waiting";
 let pendingSnapshot = "";
@@ -574,6 +630,22 @@ window.addEventListener("message", (event) => {
   }
   if (msg.type === "lavish:sendQueuedPrompts") sendQueued();
   if (msg.type === "lavish:endSession") endSession();
+  if (msg.type === "lavish:contentThemes") {
+    let current = typeof msg.current === "string" ? msg.current : "";
+    try {
+      const stored = sessionStorage.getItem(contentThemeStorageKey);
+      if (stored) current = stored;
+    } catch {
+      // Ignore; fall back to the artifact-reported current theme.
+    }
+    renderContentThemeSection(Array.isArray(msg.themes) ? msg.themes : [], current);
+    if (current && current !== msg.current) {
+      postToFrame({ type: "lavish:setContentTheme", id: current });
+    }
+  }
+  if (msg.type === "lavish:contentExport") {
+    downloadThemedCopy(String(msg.html || ""));
+  }
 });
 
 loadFrame();

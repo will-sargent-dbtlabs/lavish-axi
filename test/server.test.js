@@ -863,6 +863,37 @@ test("the overflow menu lists all three bundled themes with only the active one 
   assert.match(html, /id="theme-swiss" type="button" data-theme-value="swiss" aria-pressed="true"/);
 });
 
+test("chrome reserves a hidden placeholder for the dynamically-populated content-theme menu section", () => {
+  const html = createChromeHtml({ key: "abc", file: "/tmp/artifact.html" });
+  assert.match(html, /<div id="contentThemeSection" hidden><\/div>/);
+});
+
+test("chrome-client renders a content-theme section and wires clicks when the artifact reports one", async () => {
+  const client = await chromeClientSource();
+  assert.match(client, /msg\.type === "lavish:contentThemes"/);
+  assert.match(client, /function renderContentThemeSection\(themes, current\)/);
+  assert.match(client, /postToFrame\(\{ type: "lavish:setContentTheme", id: value \}\)/);
+  assert.match(client, /sessionStorage\.setItem\(contentThemeStorageKey, value\)/);
+});
+
+test("chrome-client restores a stored content theme choice after an artifact reload", async () => {
+  const client = await chromeClientSource();
+  assert.match(client, /sessionStorage\.getItem\(contentThemeStorageKey\)/);
+  assert.match(client, /postToFrame\(\{ type: "lavish:setContentTheme", id: current \}\)/);
+});
+
+test("chrome-client downloads a themed export as a Blob when the artifact replies with content", async () => {
+  const client = await chromeClientSource();
+  assert.match(client, /msg\.type === "lavish:contentExport"/);
+  assert.match(client, /new Blob\(\[html\], \{ type: "text\/html" \}\)/);
+  assert.match(client, /link\.download = themedFileBaseName\(\) \+ "-themed\.html";/);
+});
+
+test("the export button requests a content export from the artifact", async () => {
+  const client = await chromeClientSource();
+  assert.match(client, /postToFrame\(\{ type: "lavish:requestContentExport" \}\)/);
+});
+
 test("a session defaults to the lavish-light theme end-to-end", async () => {
   const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
   const artifact = path.join(dir, "artifact.html");
