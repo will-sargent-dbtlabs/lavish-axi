@@ -820,6 +820,111 @@ test("chrome overflow menu includes a Print / Save PDF action", () => {
   assert.match(html, /Print \/ Save PDF/);
 });
 
+test("createChromeHtml defaults to the lavish-light theme", () => {
+  const html = createChromeHtml({ key: "abc", file: "/tmp/artifact.html" });
+  assert.match(html, /<html data-lavish-theme="lavish-light">/);
+  assert.match(html, /"theme":"lavish-light"/);
+});
+
+test("createChromeHtml renders the requested theme", () => {
+  const html = createChromeHtml({ key: "abc", file: "/tmp/artifact.html" }, { theme: "midnight" });
+  assert.match(html, /<html data-lavish-theme="midnight">/);
+  assert.match(html, /"theme":"midnight"/);
+});
+
+test("the overflow menu lists all three bundled themes with only the active one pressed", () => {
+  const html = createChromeHtml({ key: "abc", file: "/tmp/artifact.html" }, { theme: "swiss" });
+  assert.match(html, /id="theme-lavish-light" type="button" data-theme-value="lavish-light" aria-pressed="false"/);
+  assert.match(html, /id="theme-midnight" type="button" data-theme-value="midnight" aria-pressed="false"/);
+  assert.match(html, /id="theme-swiss" type="button" data-theme-value="swiss" aria-pressed="true"/);
+});
+
+test("a session defaults to the lavish-light theme end-to-end", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const artifact = path.join(dir, "artifact.html");
+  await writeFile(artifact, "<!doctype html><html><body></body></html>");
+  const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
+  try {
+    const res = await fetch(`http://127.0.0.1:${server.port}/api/sessions`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ file: artifact }),
+    });
+    const body = await res.json();
+    const chrome = await (await fetch(body.url)).text();
+    assert.match(chrome, /<html data-lavish-theme="lavish-light">/);
+  } finally {
+    await server.close();
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("--theme opens a session with the requested theme for one open", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const artifact = path.join(dir, "artifact.html");
+  await writeFile(artifact, "<!doctype html><html><body></body></html>");
+  const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
+  try {
+    const res = await fetch(`http://127.0.0.1:${server.port}/api/sessions`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ file: artifact, theme: "midnight" }),
+    });
+    const body = await res.json();
+    assert.match(body.url, /[?&]theme=midnight/);
+    const chrome = await (await fetch(body.url)).text();
+    assert.match(chrome, /<html data-lavish-theme="midnight">/);
+  } finally {
+    await server.close();
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("an invalid theme in the session request is ignored, falling back to the default", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const artifact = path.join(dir, "artifact.html");
+  await writeFile(artifact, "<!doctype html><html><body></body></html>");
+  const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
+  try {
+    const res = await fetch(`http://127.0.0.1:${server.port}/api/sessions`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ file: artifact, theme: "not-a-real-theme" }),
+    });
+    const body = await res.json();
+    assert.doesNotMatch(body.url, /[?&]theme=/);
+    const chrome = await (await fetch(body.url)).text();
+    assert.match(chrome, /<html data-lavish-theme="lavish-light">/);
+  } finally {
+    await server.close();
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("LAVISH_AXI_THEME flips the default theme for new sessions", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
+  const artifact = path.join(dir, "artifact.html");
+  await writeFile(artifact, "<!doctype html><html><body></body></html>");
+  const previous = process.env.LAVISH_AXI_THEME;
+  process.env.LAVISH_AXI_THEME = "swiss";
+  const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
+  try {
+    const res = await fetch(`http://127.0.0.1:${server.port}/api/sessions`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ file: artifact }),
+    });
+    const body = await res.json();
+    const chrome = await (await fetch(body.url)).text();
+    assert.match(chrome, /<html data-lavish-theme="swiss">/);
+  } finally {
+    await server.close();
+    if (previous === undefined) delete process.env.LAVISH_AXI_THEME;
+    else process.env.LAVISH_AXI_THEME = previous;
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("chrome-client initializes annotation from the session bootstrap, not hardcoded on", async () => {
   const client = await chromeClientSource();
   assert.match(client, /let annotation = sessionData\.annotate === true/);
