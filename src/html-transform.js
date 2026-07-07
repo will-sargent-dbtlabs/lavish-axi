@@ -11,11 +11,22 @@ export function injectLavishSdk(html, key) {
 // toggles, or collapsed `<details>`. A naive `window.print()` then captures only
 // the active tab. Before printing we reveal everything: expand disclosures, drop
 // `[hidden]`, and for CSS-only tab groups force-show every panel that is visible
-// in *some* tab state (the union across states), so all tabs print stacked. The
-// routine is a no-op when there are no such controls, and best-effort — it never
+// in *some* tab state (the union across states), so all tabs print stacked, and
+// force a page break before each revealed panel root so every tab begins on its
+// own printed page. A panel root is a revealed element whose parent was visible
+// before the reveal; nested descendants of a hidden panel are skipped so we break
+// per tab, not per block. It also scales the printed output to 80% via a
+// print-scoped `zoom` (which reflows across page breaks, unlike a transform)
+// so the stacked, screen-sized type prints at a comfortable size, and prepends
+// each broken panel with an `<h1>` naming its tab (resolved from the controlling
+// input's label) so pages after the first identify which tab they show. The
+// routine is a no-op when there are no such controls, and best-effort - it never
 // blocks printing.
 const PRINT_REVEAL_SCRIPT = `<script>(function(){
+function labelText(node){var parts=[];Array.prototype.forEach.call(node.childNodes,function(c){var t=(c.textContent||"").trim();if(t)parts.push(t);});return parts.join(" · ");}
+function tabName(inp){var t="";try{if(inp.id){var l=document.querySelector('label[for="'+((window.CSS&&CSS.escape)?CSS.escape(inp.id):inp.id)+'"]');if(l)t=labelText(l);}if(!t&&inp.closest){var p=inp.closest("label");if(p)t=labelText(p);}if(!t)t=(inp.getAttribute("aria-label")||inp.value||"").trim();}catch(e){}return t;}
 function reveal(){try{
+var st=document.createElement("style");st.textContent="@media print{html{zoom:0.8}h1[data-lavish-print-heading]{font-size:1.5rem;font-weight:700;margin:0 0 0.75rem}}";(document.head||document.documentElement).appendChild(st);
 document.querySelectorAll("details:not([open])").forEach(function(d){d.open=true;});
 document.querySelectorAll("[hidden]").forEach(function(e){e.removeAttribute("hidden");});
 var inputs=Array.prototype.slice.call(document.querySelectorAll("input[type=radio],input[type=checkbox]"));
@@ -29,11 +40,15 @@ var ins=groups[k];
 var saved=ins.map(function(i){return i.checked;});
 ins.forEach(function(active){
 ins.forEach(function(i){i.checked=(i===active);});
-all.forEach(function(el){if(getComputedStyle(el).display!=="none"&&union.indexOf(el)===-1)union.push(el);});
+var name=tabName(active);
+all.forEach(function(el){if(getComputedStyle(el).display!=="none"){if(union.indexOf(el)===-1)union.push(el);if(name&&!el.__lavishTab)el.__lavishTab=name;}});
 });
 ins.forEach(function(i,idx){i.checked=saved[idx];});
 });
-union.forEach(function(el){if(getComputedStyle(el).display==="none")el.style.setProperty("display","revert","important");});
+var toReveal=union.filter(function(el){return getComputedStyle(el).display==="none";});
+var roots=toReveal.filter(function(el){return !(el.parentElement&&getComputedStyle(el.parentElement).display==="none");});
+toReveal.forEach(function(el){el.style.setProperty("display","revert","important");});
+roots.forEach(function(el){el.style.setProperty("break-before","page","important");el.style.setProperty("page-break-before","always","important");var nm=el.__lavishTab;if(nm){var h=document.createElement("h1");h.setAttribute("data-lavish-print-heading","");h.textContent=nm;el.insertBefore(h,el.firstChild);}});
 }
 }catch(e){}}
 function run(){reveal();window.print();}
