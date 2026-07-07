@@ -11,10 +11,12 @@ import { createDesignOutput, DESIGN_SYSTEM_HINT } from "./design-reference.js";
 import { clientHost, defaultPort, ensureStateDir, hostForUrl, serverLogFile, stateFile } from "./paths.js";
 import { findPlaybook, listPlaybooks, playbookIds, PLAYBOOK_ROUTER_HELP } from "./playbooks.js";
 import { serve } from "./server.js";
+import { readDiff, resolveRange } from "./git-diff.js";
+import { renderDiffArtifact } from "./diff-artifact.js";
 import { canonicalFile, sessionKey, SessionStore } from "./session-store.js";
 import { initDefaultTelemetry } from "./telemetry.js";
 
-const COMMANDS = new Set(["open", "poll", "end", "stop", "server", "playbook", "design", "setup"]);
+const COMMANDS = new Set(["open", "poll", "end", "stop", "server", "playbook", "design", "setup", "review"]);
 // SDK-reserved built-ins (e.g. `update`) must reach runAxiCli untouched; otherwise
 // the bare-arg normalization below would rewrite them into the hidden `open` command.
 const RESERVED = new Set(RESERVED_COMMANDS);
@@ -59,6 +61,7 @@ export async function run(argv) {
         design: designCommand,
         setup: setupCommand,
         server: serverCommand,
+        review: reviewCommand,
       },
       getCommandHelp,
     });
@@ -169,20 +172,61 @@ async function openCommand(args) {
   }
   await assertHtmlFile(file);
   const absolute = await canonicalFile(file);
-  const noGate = args.includes("--no-gate");
-  const annotate = resolveAnnotateFlag(args);
-  const theme = resolveThemeFlag(args);
+  return openResolved({
+    absolute,
+    noGate: args.includes("--no-gate"),
+    annotate: resolveAnnotateFlag(args),
+    theme: resolveThemeFlag(args),
+    open: shouldOpenBrowser(args, process.env),
+  });
+}
+
+// Shared open tail used by both `openCommand` (parses an HTML path) and
+// `reviewCommand` (generates one from a git diff): ensure the server, upsert the
+// session, optionally open the browser.
+async function openResolved({ absolute, noGate, annotate, theme, open }) {
   const baseUrl = await ensureServer({ forceRestart: shouldForceRestartForLocalBuild(process.argv[1] || "") });
   const response = await postJson(`${baseUrl}/api/sessions`, { file: absolute, noGate, annotate, theme });
-  if (shouldOpenBrowser(args, process.env)) {
+  if (open) {
     try {
-      const open = (await import("open")).default;
-      await open(response.url);
+      const openFn = (await import("open")).default;
+      await openFn(response.url);
     } catch {
       response.status = "ready";
     }
   }
   return createOpenOutput({ file: absolute, url: response.url, status: response.status || "opened" });
+}
+
+async function reviewCommand(args) {
+  const cwd = process.cwd();
+  const { base, range } = resolveRange(args);
+  const files = readDiff({ cwd, base, range });
+  if (files.length === 0) {
+    return {
+      review: {
+        files: 0,
+        message: `No changes to review between ${base || range || "the merge-base"} and HEAD`,
+      },
+    };
+  }
+  const branch = spawnSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], { cwd, encoding: "utf8" }).stdout.trim();
+  const nameFlag = flagValue(args, "--name");
+  const slug = (nameFlag || branch || "head").replace(/[^A-Za-z0-9._-]+/g, "-") || "head";
+  const dir = path.join(cwd, ".lavish");
+  mkdirSync(dir, { recursive: true });
+  const filePath = path.join(dir, `review-${slug}.html`);
+  writeFileSync(filePath, renderDiffArtifact(files, { title: `Review: ${branch || range || base || "changes"}` }));
+  const absolute = await canonicalFile(filePath);
+  // review is about annotating lines, so annotation defaults ON (still honors --no-annotate).
+  const annotate = resolveAnnotateFlag(args);
+  return openResolved({
+    absolute,
+    noGate: args.includes("--no-gate"),
+    annotate: annotate === undefined ? true : annotate,
+    theme: resolveThemeFlag(args),
+    open: shouldOpenBrowser(args, process.env),
+  });
 }
 
 export function shouldOpenBrowser(args, env) {
@@ -782,9 +826,10 @@ export function getCommandHelp(command) {
   return COMMAND_HELP[command] || null;
 }
 
-const TOP_LEVEL_HELP = `lavish-axi - Lavish Editor AXI\n\nUsage:\n  lavish-axi\n  lavish-axi <html-file> [--no-open] [--no-gate] [--theme <id>]\n  lavish-axi poll <html-file> [--agent-reply "..."]\n  lavish-axi end <html-file>\n  lavish-axi stop\n  lavish-axi playbook [playbook_id]\n  lavish-axi design\n  lavish-axi setup hooks\n\n${DESIGN_SYSTEM_HINT}\n\n\`--theme <id>\` (or LAVISH_AXI_THEME) sets the chrome's visual theme for this open; valid ids are lavish-light (default), midnight, and swiss.\n\nNote: poll long-polls indefinitely by default until the user sends feedback, ends the session, or the browser reports fresh layout_warnings, staying silent while it waits - never kill it. Fix layout_warnings before involving the human. Do not pass --timeout-ms during normal agent use; it is for tests and debugging only. If your harness limits how long a foreground command may run, run the poll as a background task; if it gets killed or times out anyway, just re-run it - queued feedback is never lost.\n\n`;
+const TOP_LEVEL_HELP = `lavish-axi - Lavish Editor AXI\n\nUsage:\n  lavish-axi\n  lavish-axi <html-file> [--no-open] [--no-gate] [--theme <id>]\n  lavish-axi review [<ref-or-range>] [--name <slug>] [--no-annotate]\n  lavish-axi poll <html-file> [--agent-reply "..."]\n  lavish-axi end <html-file>\n  lavish-axi stop\n  lavish-axi playbook [playbook_id]\n  lavish-axi design\n  lavish-axi setup hooks\n\n${DESIGN_SYSTEM_HINT}\n\n\`--theme <id>\` (or LAVISH_AXI_THEME) sets the chrome's visual theme for this open; valid ids are lavish-light (default), midnight, and swiss.\n\nNote: poll long-polls indefinitely by default until the user sends feedback, ends the session, or the browser reports fresh layout_warnings, staying silent while it waits - never kill it. Fix layout_warnings before involving the human. Do not pass --timeout-ms during normal agent use; it is for tests and debugging only. If your harness limits how long a foreground command may run, run the poll as a background task; if it gets killed or times out anyway, just re-run it - queued feedback is never lost.\n\n`;
 
 const COMMAND_HELP = {
+  review: `Usage: lavish-axi review [<ref-or-range>] [--name <slug>] [--no-open] [--no-gate] [--theme <id>] [--no-annotate]\n\nRead the current git diff and open it as an annotatable Lavish review artifact. With no ref, diffs this branch against its merge-base with the default branch (origin/HEAD, else main/master), including uncommitted and untracked changes. Pass a ref (\`review main\`) or range (\`review a..b\`) to override. Annotation is ON by default; use --no-annotate to disable. Click or select a diff line to attach a precise file:line comment for the agent.\n`,
   open: `Usage: lavish-axi <html-file> [--no-open] [--no-gate] [--theme <id>]\n\nOpen or resume a Lavish Editor review session for an HTML artifact. Use --no-open when you need to ensure the server/session exists without opening another browser window. Use --no-gate to skip the open-time layout curtain for this browser open. Use --theme <id> (or LAVISH_AXI_THEME) to set the chrome's visual theme for this open; valid ids are lavish-light (default), midnight, and swiss.\n`,
   poll: `Usage: lavish-axi poll <html-file> [--agent-reply "..."]\n\nThis command long-polls indefinitely for queued user prompts and browser-reported layout_warnings, then returns them to the agent. It stays silent while it waits - that is normal, never kill it. Fix layout_warnings before involving the human. Do not pass --timeout-ms during normal agent use; it is for tests and debugging only. If your harness limits how long a foreground command may run, run the poll as a background task and wait for it to finish; if it still gets killed or times out, just re-run it - queued feedback is never lost. Use --agent-reply after applying prior feedback to display your response in Lavish Editor before waiting again.\n`,
   end: `Usage: lavish-axi end <html-file>\n\nEnd a Lavish Editor session.\n`,

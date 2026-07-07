@@ -959,3 +959,18 @@ test("resolveThemeFlag is undefined when no --theme flag is present", () => {
 test("resolveThemeFlag reads the value after --theme", () => {
   assert.equal(resolveThemeFlag(["--theme", "swiss", "report.html"]), "swiss");
 });
+
+test("review: errors clearly outside a git repository", async () => {
+  const dir = await mkdtemp(`${os.tmpdir()}/lavish-axi-review-nogit-`);
+  try {
+    const result = spawnSync(
+      process.execPath,
+      [fileURLToPath(new URL("../bin/lavish-axi.js", import.meta.url)), "review", "--no-open"],
+      { cwd: dir, encoding: "utf8" },
+    );
+    assert.notEqual(result.status, 0, result.stdout);
+    assert.match(`${result.stdout}\n${result.stderr}`, /not a git repository/i);
+  } finally {
+    await rm(dir, { force: true, recursive: true });
+  }
+});

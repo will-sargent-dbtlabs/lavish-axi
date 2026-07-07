@@ -119,6 +119,7 @@ export const PLAYBOOKS = [
     id: "code",
     use_when: "Render source code, code files, patches, PR diffs, and before/after code inside Lavish artifacts",
     choose: [
+      "When reviewing a real git working state, prefer `lavish-axi review` (it reads the diff for you and renders an annotatable surface); hand-author with @pierre/diffs only for synthetic or illustrative snippets, or non-git code.",
       "Use this whenever an artifact shows source code: a snippet, full file, patch, PR diff, local change set, or before/after code.",
       "Use File for one code file, FileDiff for old/new versions or parsed patch metadata, and CodeView only when several files or diffs need coordinated navigation.",
       "Choose split layout for careful side-by-side review when width allows; choose unified layout when space is tight, changes are mostly additive, or mobile readability matters.",
