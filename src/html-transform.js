@@ -23,7 +23,8 @@ export function injectLavishSdk(html, key) {
 // routine is a no-op when there are no such controls, and best-effort - it never
 // blocks printing.
 const PRINT_REVEAL_SCRIPT = `<script>(function(){
-function tabName(inp){var t="";try{if(inp.id){var l=document.querySelector('label[for="'+((window.CSS&&CSS.escape)?CSS.escape(inp.id):inp.id)+'"]');if(l)t=l.textContent;}if(!t&&inp.closest){var p=inp.closest("label");if(p)t=p.textContent;}if(!t)t=inp.getAttribute("aria-label")||inp.value||"";}catch(e){}return t.trim();}
+function labelText(node){var parts=[];Array.prototype.forEach.call(node.childNodes,function(c){var t=(c.textContent||"").trim();if(t)parts.push(t);});return parts.join(" · ");}
+function tabName(inp){var t="";try{if(inp.id){var l=document.querySelector('label[for="'+((window.CSS&&CSS.escape)?CSS.escape(inp.id):inp.id)+'"]');if(l)t=labelText(l);}if(!t&&inp.closest){var p=inp.closest("label");if(p)t=labelText(p);}if(!t)t=(inp.getAttribute("aria-label")||inp.value||"").trim();}catch(e){}return t;}
 function reveal(){try{
 var st=document.createElement("style");st.textContent="@media print{html{zoom:0.8}h1[data-lavish-print-heading]{font-size:1.5rem;font-weight:700;margin:0 0 0.75rem}}";(document.head||document.documentElement).appendChild(st);
 document.querySelectorAll("details:not([open])").forEach(function(d){d.open=true;});

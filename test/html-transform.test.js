@@ -58,6 +58,8 @@ test("print script labels each broken tab page with its tab name as an <h1>", ()
   // prepends a marked <h1> heading onto each page-broken panel
   assert.match(result, /createElement\("h1"\)/);
   assert.match(result, /data-lavish-print-heading/);
+  // joins badge/title label segments with a separator
+  assert.match(result, /join\(" \u00b7 "\)/);
 });
 
 test("print script scales the printed output to 80% for a comfortable size", () => {
