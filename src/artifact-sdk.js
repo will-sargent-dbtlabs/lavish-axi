@@ -113,6 +113,20 @@ export function isNativeInteractiveControl(el) {
   );
 }
 
+// Resolve the diff line an element belongs to, from the data-* attributes stamped
+// by `lavish-axi review`. Returns null for non-diff artifacts, so callers fall
+// back to normal element/text-range annotation.
+export function resolveDiffLine(el) {
+  const line = el && el.closest ? el.closest("[data-diff-line]") : null;
+  if (!line) return null;
+  return {
+    type: "diff-line",
+    file: line.getAttribute("data-file"),
+    line: Number(line.getAttribute("data-line")),
+    side: line.getAttribute("data-side"),
+  };
+}
+
 export function createArtifactSdk(deriveQueueKey, isNativeInteractive = isNativeInteractiveControl) {
   let annotationMode = true;
   let hovered = null;
@@ -153,11 +167,13 @@ export function createArtifactSdk(deriveQueueKey, isNativeInteractive = isNative
   }
 
   function context(el) {
+    const diffLine = resolveDiffLine(el);
     return {
       uid: uid(el),
       selector: selector(el),
-      tag: (el.tagName || "").toLowerCase(),
+      tag: diffLine ? "diff-line" : (el.tagName || "").toLowerCase(),
       text: (el.innerText || el.textContent || "").trim().replace(/\s+/g, " ").slice(0, 240),
+      ...(diffLine ? { target: diffLine } : {}),
     };
   }
 
@@ -199,6 +215,21 @@ export function createArtifactSdk(deriveQueueKey, isNativeInteractive = isNative
     if (isLavishUi(ancestor) || isLavishAction(ancestor) || isInteractiveControl(ancestor)) return null;
 
     const commonAncestorSelector = selector(ancestor);
+
+    const diffLine = resolveDiffLine(ancestor);
+    if (diffLine) {
+      diffLine.text = text.slice(0, 240);
+      return {
+        uid: "",
+        selector: commonAncestorSelector,
+        tag: "diff-line",
+        text: text.slice(0, 240),
+        target: diffLine,
+        element: ancestor,
+        range: range.cloneRange(),
+      };
+    }
+
     const target = {
       type: "text-range",
       text,

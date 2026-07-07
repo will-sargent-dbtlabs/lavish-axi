@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { deriveLavishQueueKey, isNativeInteractiveControl } from "../src/artifact-sdk.js";
+import { deriveLavishQueueKey, isNativeInteractiveControl, resolveDiffLine } from "../src/artifact-sdk.js";
 
 function node(tag, attrs = {}, children = []) {
   const el = {
@@ -46,6 +46,7 @@ function matchesSelectorList(el, selectorList) {
 function matchesSelector(el, selector) {
   if (selector === "form" || selector === "fieldset") return el.tagName.toLowerCase() === selector;
   if (selector === "[data-lavish-question]") return el.getAttribute("data-lavish-question") !== null;
+  if (selector === "[data-diff-line]") return el.getAttribute("data-diff-line") !== null;
   if (selector === "[contenteditable]:not([contenteditable='false'])") {
     const value = el.getAttribute("contenteditable");
     return value !== null && value !== "false";
@@ -147,4 +148,16 @@ test("deriveLavishQueueKey keys named selects as fields", () => {
   node("form", { id: "deploy" }, [select]);
 
   assert.equal(deriveLavishQueueKey(select), "field:form:deploy:region");
+});
+
+test("resolveDiffLine reads file/line/side from a data-diff-line ancestor", () => {
+  const code = node("span");
+  node("div", { "data-diff-line": "", "data-file": "src/x.js", "data-line": "7", "data-side": "new" }, [code]);
+
+  assert.deepEqual(resolveDiffLine(code), { type: "diff-line", file: "src/x.js", line: 7, side: "new" });
+});
+
+test("resolveDiffLine returns null outside a diff line", () => {
+  const el = node("p");
+  assert.equal(resolveDiffLine(el), null);
 });
