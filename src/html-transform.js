@@ -11,9 +11,12 @@ export function injectLavishSdk(html, key) {
 // toggles, or collapsed `<details>`. A naive `window.print()` then captures only
 // the active tab. Before printing we reveal everything: expand disclosures, drop
 // `[hidden]`, and for CSS-only tab groups force-show every panel that is visible
-// in *some* tab state (the union across states), so all tabs print stacked. The
-// routine is a no-op when there are no such controls, and best-effort — it never
-// blocks printing.
+// in *some* tab state (the union across states), so all tabs print stacked, and
+// force a page break before each revealed panel root so every tab begins on its
+// own printed page. A panel root is a revealed element whose parent was visible
+// before the reveal; nested descendants of a hidden panel are skipped so we break
+// per tab, not per block. The routine is a no-op when there are no such controls,
+// and best-effort - it never blocks printing.
 const PRINT_REVEAL_SCRIPT = `<script>(function(){
 function reveal(){try{
 document.querySelectorAll("details:not([open])").forEach(function(d){d.open=true;});
@@ -33,7 +36,10 @@ all.forEach(function(el){if(getComputedStyle(el).display!=="none"&&union.indexOf
 });
 ins.forEach(function(i,idx){i.checked=saved[idx];});
 });
-union.forEach(function(el){if(getComputedStyle(el).display==="none")el.style.setProperty("display","revert","important");});
+var toReveal=union.filter(function(el){return getComputedStyle(el).display==="none";});
+var roots=toReveal.filter(function(el){return !(el.parentElement&&getComputedStyle(el.parentElement).display==="none");});
+toReveal.forEach(function(el){el.style.setProperty("display","revert","important");});
+roots.forEach(function(el){el.style.setProperty("break-before","page","important");el.style.setProperty("page-break-before","always","important");});
 }
 }catch(e){}}
 function run(){reveal();window.print();}

@@ -50,6 +50,18 @@ test("injects a print script that reveals hidden content then prints, before </b
   assert.match(result, /<\/script><\/body><\/html>$/);
 });
 
+test("print script starts each revealed tab panel on its own page", () => {
+  const html = "<!doctype html><html><body><h1>Hi</h1></body></html>";
+  const result = injectPrintScript(html);
+
+  // page-break the revealed panels so each tab prints on a fresh page
+  assert.match(result, /break-before/);
+  // legacy alias too, for broader print-engine support
+  assert.match(result, /page-break-before/);
+  // breaks apply only to panel roots (parent visible pre-reveal), not nested content
+  assert.match(result, /parentElement/);
+});
+
 test("print script appends at end of document when there is no body tag", () => {
   const result = injectPrintScript("<h1>Hi</h1>");
 
