@@ -170,13 +170,11 @@ Return shape (plain data):
 [
   {
     path: "src/foo.js",
-    oldPath: "src/foo.js",   // differs on rename
-    status: "modified",       // added | modified | deleted | renamed | untracked | binary
-    hunks: [
-      { oldStart, newStart, lines: [ { side, lineNo, content } ] }
-    ]
-  }
-]
+    oldPath: "src/foo.js", // differs on rename
+    status: "modified", // added | modified | deleted | renamed | untracked | binary
+    hunks: [{ oldStart, newStart, lines: [{ side, lineNo, content }] }],
+  },
+];
 ```
 
 `side ∈ { "old", "new", "context" }`; `lineNo` is the line number on that side.
@@ -295,19 +293,19 @@ All failures surface as `AxiError` with actionable hints (codebase idiom):
 
 ## Files touched
 
-| File | Change |
-| --- | --- |
-| `src/git-diff.js` | **new** — range resolution + git shell-out → diff data (single `git diff <mb>` + untracked) |
-| `src/diff-artifact.js` | **new** — diff data → self-rendered HTML with `data-*` line attrs |
-| `src/cli.js` | add `review` command; extract `openResolved(...)` helper shared with `openCommand` |
-| `src/artifact-sdk.js` | add `resolveDiffLine`; attach `diff-line` target on click **and** text-range paths |
-| `src/playbooks.js` | amend `code` playbook to point at `review` |
-| `skills/lavish/SKILL.md` | regenerated via `build:skill` |
-| `test/git-diff.test.js` | **new** |
-| `test/diff-artifact.test.js` | **new** |
-| `test/cli-output.test.js` | extend |
-| `test/artifact-sdk.test.js` | extend |
-| `test/server.test.js` | extend |
+| File                         | Change                                                                                      |
+| ---------------------------- | ------------------------------------------------------------------------------------------- |
+| `src/git-diff.js`            | **new** — range resolution + git shell-out → diff data (single `git diff <mb>` + untracked) |
+| `src/diff-artifact.js`       | **new** — diff data → self-rendered HTML with `data-*` line attrs                           |
+| `src/cli.js`                 | add `review` command; extract `openResolved(...)` helper shared with `openCommand`          |
+| `src/artifact-sdk.js`        | add `resolveDiffLine`; attach `diff-line` target on click **and** text-range paths          |
+| `src/playbooks.js`           | amend `code` playbook to point at `review`                                                  |
+| `skills/lavish/SKILL.md`     | regenerated via `build:skill`                                                               |
+| `test/git-diff.test.js`      | **new**                                                                                     |
+| `test/diff-artifact.test.js` | **new**                                                                                     |
+| `test/cli-output.test.js`    | extend                                                                                      |
+| `test/artifact-sdk.test.js`  | extend                                                                                      |
+| `test/server.test.js`        | extend                                                                                      |
 
 `src/session-store.js` and `src/server.js` are intentionally **not** modified — the
 shared data model (deep-clone passthrough, finding 5) and the serving pipeline both

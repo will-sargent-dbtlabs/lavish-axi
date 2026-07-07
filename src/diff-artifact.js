@@ -1,10 +1,6 @@
 /** @param {unknown} s */
 function esc(s) {
-  return String(s)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
 /** @param {import("./git-diff.js").FileDiff} file */
@@ -26,7 +22,9 @@ function renderFile(file) {
       );
     }
   }
-  const body = rows.length ? `<div class="df-body">${rows.join("")}</div>` : `<p class="df-binary">no textual changes</p>`;
+  const body = rows.length
+    ? `<div class="df-body">${rows.join("")}</div>`
+    : `<p class="df-binary">no textual changes</p>`;
   return `<section class="df">${header}${body}</section>`;
 }
 

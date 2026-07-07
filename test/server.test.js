@@ -2141,3 +2141,43 @@ test("chrome client chat input sends on Enter and inserts newline on Shift+Enter
   assert.match(js, /event\.preventDefault\(\)/);
   assert.match(js, /sendQueued\(\)/);
 });
+
+test("a review artifact serves diff-line anchors and a diff-line target survives poll", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "lavish-review-"));
+  const artifact = path.join(dir, "review.html");
+  await writeFile(
+    artifact,
+    '<!doctype html><html><body><div class="dl" data-diff-line data-file="src/foo.js" data-line="2" data-side="new"><span>const b = 3;</span></div></body></html>',
+  );
+  const server = await serve({ port: 0, stateFile: path.join(dir, "state.json"), version: "9.9.9-test" });
+  try {
+    const absolute = await canonicalFile(artifact);
+    const key = sessionKey(absolute);
+
+    await fetch(`http://127.0.0.1:${server.port}/api/sessions`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ file: artifact, annotate: true }),
+    });
+
+    const served = await (await fetch(`http://127.0.0.1:${server.port}/artifact/${key}/index.html`)).text();
+    assert.match(served, /data-diff-line data-file="src\/foo\.js" data-line="2" data-side="new"/);
+
+    const target = { type: "diff-line", file: "src/foo.js", line: 2, side: "new" };
+    await fetch(`http://127.0.0.1:${server.port}/api/${key}/prompts`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ prompts: [{ prompt: "tighten this guard", tag: "diff-line", target }] }),
+    });
+
+    const poll = await (
+      await fetch(`http://127.0.0.1:${server.port}/api/poll?file=${encodeURIComponent(absolute)}&timeoutMs=0`)
+    ).json();
+    assert.equal(poll.status, "feedback");
+    assert.equal(poll.prompts.length, 1);
+    assert.deepEqual(poll.prompts[0].target, target);
+  } finally {
+    await server.close();
+    await rm(dir, { recursive: true, force: true });
+  }
+});

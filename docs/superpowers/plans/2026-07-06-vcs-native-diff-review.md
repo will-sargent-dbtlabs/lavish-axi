@@ -23,10 +23,12 @@
 ### Task 1: Unified-diff parser (`src/git-diff.js`, pure function)
 
 **Files:**
+
 - Create: `src/git-diff.js`
 - Test: `test/git-diff.test.js`
 
 **Interfaces:**
+
 - Produces: `parseUnifiedDiff(text: string): FileDiff[]` where
   `FileDiff = { path, oldPath, status, hunks: Hunk[] }`,
   `Hunk = { oldStart, newStart, lines: Line[] }`,
@@ -199,10 +201,12 @@ git commit -m "feat(review): unified diff parser"
 ### Task 2: git integration in `src/git-diff.js`
 
 **Files:**
+
 - Modify: `src/git-diff.js`
 - Test: `test/git-diff.test.js`
 
 **Interfaces:**
+
 - Consumes: `parseUnifiedDiff` (Task 1).
 - Produces:
   - `resolveRange(args: string[], cwd: string): { base: string|null, range: string|null }`
@@ -358,7 +362,9 @@ export function readDiff({ cwd, base, range }) {
   if (untracked.status === 0) {
     for (const rel of untracked.stdout.split("\n").filter(Boolean)) {
       const emptyToFile = runGit(cwd, ["diff", "--no-color", "--no-index", "/dev/null", rel]);
-      const parsed = parseUnifiedDiff(emptyToFile.stdout.replace(/^diff --git a\/dev\/null b\/(.+)$/m, "diff --git a/$1 b/$1"));
+      const parsed = parseUnifiedDiff(
+        emptyToFile.stdout.replace(/^diff --git a\/dev\/null b\/(.+)$/m, "diff --git a/$1 b/$1"),
+      );
       for (const f of parsed) {
         f.path = rel;
         f.oldPath = rel;
@@ -390,10 +396,12 @@ git commit -m "feat(review): git range resolution + readDiff with untracked file
 ### Task 3: Diff artifact renderer (`src/diff-artifact.js`)
 
 **Files:**
+
 - Create: `src/diff-artifact.js`
 - Test: `test/diff-artifact.test.js`
 
 **Interfaces:**
+
 - Consumes: `FileDiff[]` (Task 1/2 shape).
 - Produces: `renderDiffArtifact(files: FileDiff[], opts?: { title?: string }): string` — a complete HTML document string. Each diff line is a `<div class="dl dl-<side>" data-diff-line data-file="..." data-line="N" data-side="old|new|context">`.
 
@@ -453,11 +461,7 @@ Expected: FAIL — module not found.
 
 /** @param {string} s */
 function esc(s) {
-  return String(s)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
 /** @param {import("./git-diff.js").FileDiff} file */
@@ -542,10 +546,12 @@ git commit -m "feat(review): self-contained diff artifact renderer"
 ### Task 4: `review` command + `openResolved` refactor (`src/cli.js`)
 
 **Files:**
+
 - Modify: `src/cli.js` — `COMMANDS` set (`:17`), dispatch map (`:53-62`), extract `openResolved`, add `reviewCommand`, `TOP_LEVEL_HELP` (`:785`), `COMMAND_HELP` (`:787`).
 - Test: `test/cli-output.test.js`
 
 **Interfaces:**
+
 - Consumes: `readDiff`, `resolveRange` (git-diff.js); `renderDiffArtifact` (diff-artifact.js); existing `ensureServer`, `postJson`, `shouldOpenBrowser`, `resolveThemeFlag`, `resolveAnnotateFlag`, `canonicalFile`, `createOpenOutput`.
 - Produces: `reviewCommand(args)`; `openResolved({ absolute, noGate, annotate, theme, open })`.
 
@@ -634,7 +640,9 @@ async function reviewCommand(args) {
   const { base, range } = resolveRange(args, cwd);
   const files = readDiff({ cwd, base, range });
   if (files.length === 0) {
-    return { review: { files: 0, message: `No changes to review between ${base || range || "the merge-base"} and HEAD` } };
+    return {
+      review: { files: 0, message: `No changes to review between ${base || range || "the merge-base"} and HEAD` },
+    };
   }
   const branch = spawnSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], { cwd, encoding: "utf8" }).stdout.trim();
   const nameFlag = flagValue(args, "--name");
@@ -687,10 +695,12 @@ git commit -m "feat(review): review command + shared openResolved helper"
 ### Task 5: Diff-line annotation capture (`src/artifact-sdk.js`)
 
 **Files:**
+
 - Modify: `src/artifact-sdk.js` — add `resolveDiffLine` near `selector`/`context` (`~:130-162`); extend `context` (click path) and `textSelectionContext` (`:191-219`).
 - Test: `test/artifact-sdk.test.js`
 
 **Interfaces:**
+
 - Produces: annotations whose `target` is `{ type:"diff-line", file, line, side, text? }` when the annotated node is inside a `[data-diff-line]` element.
 
 **How it reaches the agent:** `context`/`textSelectionContext` set `target`; `queuePrompt(prompt,{...c})` carries it; `SessionStore.normalizeTarget` deep-clones it; `poll` returns `prompts[].target`. No session-store change.
@@ -720,50 +730,50 @@ Expected: FAIL — no diff-line target produced.
 3a. Add near `context` (`src/artifact-sdk.js:~155`):
 
 ```js
-  function resolveDiffLine(el) {
-    const line = el && el.closest ? el.closest("[data-diff-line]") : null;
-    if (!line) return null;
-    return {
-      type: "diff-line",
-      file: line.getAttribute("data-file"),
-      line: Number(line.getAttribute("data-line")),
-      side: line.getAttribute("data-side"),
-    };
-  }
+function resolveDiffLine(el) {
+  const line = el && el.closest ? el.closest("[data-diff-line]") : null;
+  if (!line) return null;
+  return {
+    type: "diff-line",
+    file: line.getAttribute("data-file"),
+    line: Number(line.getAttribute("data-line")),
+    side: line.getAttribute("data-side"),
+  };
+}
 ```
 
 3b. Extend `context` (`:155-162`) to attach the target on the click path:
 
 ```js
-  function context(el) {
-    const dl = resolveDiffLine(el);
-    return {
-      uid: uid(el),
-      selector: selector(el),
-      tag: dl ? "diff-line" : (el.tagName || "").toLowerCase(),
-      text: (el.innerText || el.textContent || "").trim().replace(/\s+/g, " ").slice(0, 240),
-      ...(dl ? { target: dl } : {}),
-    };
-  }
+function context(el) {
+  const dl = resolveDiffLine(el);
+  return {
+    uid: uid(el),
+    selector: selector(el),
+    tag: dl ? "diff-line" : (el.tagName || "").toLowerCase(),
+    text: (el.innerText || el.textContent || "").trim().replace(/\s+/g, " ").slice(0, 240),
+    ...(dl ? { target: dl } : {}),
+  };
+}
 ```
 
 3c. In `textSelectionContext` (`:191-219`), before returning, resolve a diff line from `ancestor`; when found, prefer a precise `diff-line` target carrying the selected text:
 
 ```js
-    const dl = resolveDiffLine(ancestor);
-    if (dl) {
-      dl.text = text.slice(0, 240);
-      return {
-        uid: "",
-        selector: commonAncestorSelector,
-        tag: "diff-line",
-        text: text.slice(0, 240),
-        target: dl,
-        element: ancestor,
-        range: range.cloneRange(),
-      };
-    }
-    // (existing text-range target + return unchanged below)
+const dl = resolveDiffLine(ancestor);
+if (dl) {
+  dl.text = text.slice(0, 240);
+  return {
+    uid: "",
+    selector: commonAncestorSelector,
+    tag: "diff-line",
+    text: text.slice(0, 240),
+    target: dl,
+    element: ancestor,
+    range: range.cloneRange(),
+  };
+}
+// (existing text-range target + return unchanged below)
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
@@ -783,6 +793,7 @@ git commit -m "feat(review): capture diff-line targets on click and selection"
 ### Task 6: Amend `code` playbook + regenerate skill
 
 **Files:**
+
 - Modify: `src/playbooks.js` (`code` playbook, `:118-178`)
 - Regenerate: `skills/lavish/SKILL.md` via `npm run build:skill`
 - Test: `test/skill.test.js` (freshness already covered by `build:skill --check`)
@@ -818,6 +829,7 @@ git commit -m "docs(review): point code playbook at review; regenerate skill"
 ### Task 7: End-to-end + full gate
 
 **Files:**
+
 - Test: `test/server.test.js` (extend)
 
 - [ ] **Step 1: Add an end-to-end test** following the file's `LAVISH_AXI_STATE_DIR`+ephemeral-port harness: write a rendered diff artifact to a temp file, POST `/api/sessions`, GET `/artifact/:key/index.html`, assert the served HTML contains `data-diff-line`; POST a prompt with `target:{type:"diff-line",file:"src/foo.js",line:2,side:"new"}`, then GET `/api/poll` and assert the returned prompt's `target` matches (proves deep-clone passthrough end-to-end).

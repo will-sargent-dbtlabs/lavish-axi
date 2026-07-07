@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import { renderDiffArtifact } from "../src/diff-artifact.js";
 
+/** @type {import("../src/git-diff.js").FileDiff[]} */
 const FILES = [
   {
     path: "src/foo.js",
@@ -41,7 +42,8 @@ test("renderDiffArtifact: binary file shows a notice, not lines", () => {
 });
 
 test("renderDiffArtifact: summary counts additions and deletions", () => {
-  const html = renderDiffArtifact([
+  /** @type {import("../src/git-diff.js").FileDiff[]} */
+  const summaryFiles = [
     {
       path: "x",
       oldPath: "x",
@@ -58,7 +60,8 @@ test("renderDiffArtifact: summary counts additions and deletions", () => {
         },
       ],
     },
-  ]);
+  ];
+  const html = renderDiffArtifact(summaryFiles);
   assert.match(html, /\+2/);
   assert.match(html, /−1/);
 });
