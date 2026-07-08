@@ -450,7 +450,7 @@ function setLayoutGateCard(state) {
   }
 
   layoutGateTitle.innerHTML = "Checking layout.<br>One moment.";
-  layoutGateCopy.textContent = "Lavish is waiting for fonts and final geometry before revealing this artifact.";
+  layoutGateCopy.textContent = "Loupe is waiting for fonts and final geometry before revealing this artifact.";
 }
 
 function setLayoutGateActive(active) {
@@ -471,7 +471,7 @@ function forceRevealLayoutGate(reason) {
   if (reason === "manual") layoutGateManuallyBypassed = true;
   const bannerText =
     reason === "timeout"
-      ? "This surface may have layout issues. Lavish revealed it after the safety timeout so review is never blocked."
+      ? "This surface may have layout issues. Loupe revealed it after the safety timeout so review is never blocked."
       : "This surface may have layout issues. You chose to show it before the layout check passed.";
   revealLayoutGate({ showBanner: true, bannerText });
 }
