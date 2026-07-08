@@ -117,6 +117,17 @@ test("artifact SDK script is valid JavaScript", () => {
   assert.doesNotThrow(() => new Function(js));
 });
 
+test("artifact SDK inlines resolveDiffLine so diff-line annotation does not throw", () => {
+  const js = createSdkJs("abc");
+
+  // Regression: resolveDiffLine is a module-scope helper called by context() and
+  // textSelectionContext(). It must be inlined into the injected bundle; otherwise
+  // it is an undefined free variable and every annotation click in a `review`
+  // artifact throws ReferenceError before the annotation card can render.
+  assert.match(js, /function resolveDiffLine/);
+  assert.match(js, /\[data-diff-line\]/);
+});
+
 test("artifact SDK ignores Lavish-owned annotation UI", () => {
   const js = createSdkJs("abc");
 
@@ -374,8 +385,8 @@ test("chrome top bar follows the design mock wordmark and overflow menu treatmen
   const html = createChromeHtml({ key: "abc", file: "/tmp/artifact.html" });
   const css = await chromeCssSource();
 
-  assert.match(html, /class="brand-mark">Lavish/);
-  assert.match(html, /class="brand-support">Editor/);
+  assert.match(html, /class="brand-mark">Loupe/);
+  assert.match(html, /<div class="brand"><svg[^>]*aria-hidden="true"[^>]*><circle/);
   assert.match(css, /font-family:var\(--font-serif\)/);
   assert.match(css, /letter-spacing:\.18em/);
   assert.match(html, /class="more-button" id="moreButton"/);
