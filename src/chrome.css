@@ -827,3 +827,27 @@ body.layout-gate-active iframe#artifact {
     max-width: min(220px, 70vw);
   }
 }
+
+/* Co-brand lockup: Fivetran + dbt (Newco). White pill on dark, color pill on light. */
+.cobrand {
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+  align-self: center;
+}
+.cobrand svg {
+  height: 22px;
+  width: auto;
+  display: block;
+}
+.cobrand .cb-color {
+  display: none;
+}
+:root[data-lavish-theme="lavish-light"] .cobrand .cb-white,
+:root[data-lavish-theme="swiss"] .cobrand .cb-white {
+  display: none;
+}
+:root[data-lavish-theme="lavish-light"] .cobrand .cb-color,
+:root[data-lavish-theme="swiss"] .cobrand .cb-color {
+  display: block;
+}
