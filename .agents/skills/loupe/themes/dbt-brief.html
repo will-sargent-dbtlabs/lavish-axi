@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="lavish-design" content="off">
+<title>dbt Brief — sample</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --orange: #fd6603;
+    --purple: #7b2de4;
+    --grad: linear-gradient(135deg, var(--orange) 0%, var(--purple) 100%);
+    --paper: #f8f9fa;
+    --ink:   #2c3e50;
+    --muted: #6b7280;
+    --rule:  #f0f0f0;
+    --shadow: 0 4px 20px rgba(0,0,0,0.06);
+    --card: #fff;
+    --code-bg: #f0f0f0;
+    --pre-bg: #f5f5f5;
+  }
+  :root[data-lavish-content-theme="dark"] {
+    --paper: #14171c;
+    --ink:   #e8ebef;
+    --muted: #9aa3af;
+    --rule:  #2a2f38;
+    --card: #1c2027;
+    --code-bg: #262b33;
+    --pre-bg: #21252c;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  body { padding: 0 0 80px; max-width: 1180px; margin: 0 auto; }
+
+  header.masthead {
+    background: var(--grad); color: white; padding: 44px 6vw 36px;
+    display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: start;
+    margin-bottom: 36px;
+  }
+  header.masthead h1 {
+    font-weight: 800; font-size: clamp(1.9rem, 4.2vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.01em; margin: 0 0 8px; text-wrap: balance;
+  }
+  header.masthead .subtitle { font-size: 1.15em; opacity: 0.95; font-weight: 400; margin: 0 0 10px; }
+  header.masthead .meta {
+    font-size: 0.85em; opacity: 0.85; display: flex; gap: 20px; flex-wrap: wrap;
+  }
+  header.masthead .badge-chip {
+    background: rgba(255,255,255,0.16); backdrop-filter: blur(8px);
+    padding: 10px 18px; border-radius: 10px; text-align: right; font-size: 0.85em;
+    min-width: 170px;
+  }
+  header.masthead .badge-chip .chip-label { opacity: 0.78; font-size: 0.85em; }
+  header.masthead .badge-chip .chip-value { font-weight: 700; font-size: 1.1em; }
+
+  main { padding: 0 6vw; display: grid; grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); gap: 48px; align-items: start; }
+  article > * + * { margin-top: 1.2em; }
+  aside { font-size: 0.92rem; color: var(--muted); }
+  aside .aside-box {
+    background: var(--card); border-radius: 12px; box-shadow: var(--shadow);
+    border: 1px solid var(--rule); border-left: 4px solid var(--orange);
+    padding: 18px 20px; margin-bottom: 16px;
+  }
+  aside h3 { font-weight: 700; font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink); margin: 0 0 8px; }
+
+  h2.section-title {
+    font-size: 1.7em; color: var(--ink); margin: 2.2em 0 12px 0; font-weight: 700;
+    padding-bottom: 10px; border-bottom: 3px solid var(--orange);
+    display: flex; align-items: center; gap: 10px;
+  }
+  h2.section-title:first-child { margin-top: 0; }
+  h3.subsection-title {
+    font-size: 1.15em; color: var(--ink); margin: 1.6em 0 14px 0;
+    padding-left: 13px; border-left: 4px solid var(--orange); font-weight: 700;
+  }
+  p { margin: 0; max-width: 70ch; }
+  p.lede { font-size: 1.18rem; line-height: 1.45; font-weight: 500; max-width: 60ch; color: var(--ink); }
+  strong { font-weight: 700; }
+  em { font-style: italic; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.9em; padding: 1px 6px; background: var(--code-bg); border: 1px solid #e5e5e5; border-radius: 4px; overflow-wrap: anywhere; word-break: break-word; }
+  pre { background: var(--pre-bg); color: var(--ink); border: 1px solid #e5e5e5; padding: 16px 18px; border-radius: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.88rem; line-height: 1.5; overflow-x: auto; }
+  pre code { background: transparent; border: 0; padding: 0; }
+  blockquote {
+    margin: 0; padding: 16px 0 16px 22px; border-left: 4px solid var(--purple);
+    font-weight: 500; font-size: 1.2rem; line-height: 1.35; max-width: 52ch; color: var(--ink);
+  }
+
+  /* ── badges ── */
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 14px; font-size: 0.78em; font-weight: 600; vertical-align: middle; }
+  .badge.green  { background: #dcfce7; color: #15803d; }
+  .badge.yellow { background: #fef3c7; color: #b45309; }
+  .badge.red    { background: #fee2e2; color: #b91c1c; }
+  .badge.blue   { background: #dbeafe; color: #1d4ed8; }
+  .badge.purple { background: #f3e8ff; color: #7c3aed; }
+  .badge.gray   { background: #f1f5f9; color: #475569; }
+  .badge.orange { background: #ffedd5; color: #c2410c; }
+
+  /* ── info grid (definition-list cards) ── */
+  .info-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px 24px; background: var(--card); padding: 20px 24px; border-radius: 12px;
+    box-shadow: var(--shadow); border: 1px solid var(--rule); margin: 14px 0;
+  }
+  .info-row { display: flex; flex-direction: column; gap: 4px; padding: 6px 0; border-bottom: 1px solid #f3f3f3; min-width: 0; }
+  .info-row:last-child { border-bottom: none; }
+  .info-row .info-label { font-size: 0.7em; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600; }
+  .info-row .info-value { font-size: 0.96em; color: var(--ink); font-weight: 500; overflow-wrap: break-word; }
+
+  /* ── card grid ── */
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin: 18px 0; }
+  .card { background: var(--card); padding: 22px; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--rule); border-top: 4px solid var(--orange); min-width: 0; }
+  .card h4 { color: var(--orange); margin: 0 0 10px; font-size: 1.05em; font-weight: 700; }
+  .card p { color: var(--ink); font-size: 0.92em; max-width: none; }
+
+  /* ── highlight box ── */
+  .highlight-box {
+    background: linear-gradient(135deg, rgba(253,102,3,0.05) 0%, rgba(123,45,228,0.05) 100%);
+    border-left: 4px solid var(--orange); padding: 20px 24px; border-radius: 10px; margin: 18px 0;
+  }
+  .highlight-box h4 { color: var(--orange); margin: 0 0 8px; font-size: 1.05em; font-weight: 700; }
+
+  /* ── table ── */
+  table { width: 100%; border-collapse: collapse; font-size: 0.92rem; background: var(--card); box-shadow: var(--shadow); border-radius: 12px; overflow: hidden; }
+  thead { background: var(--grad); color: white; }
+  th { padding: 12px 16px; text-align: left; font-weight: 600; font-size: 0.85em; }
+  td { padding: 12px 16px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #fafafa; }
+
+  /* ── pain / risk items (left-bar cards) ── */
+  .pain-list { display: flex; flex-direction: column; gap: 12px; margin: 16px 0; }
+  .pain-item { background: var(--card); padding: 18px 20px; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); border-left: 4px solid #c2410c; min-width: 0; }
+  .pain-item h4 { color: var(--ink); margin: 0 0 6px; font-size: 1em; }
+  .pain-item .pain-meta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; font-size: 0.8em; color: var(--muted); }
+
+  /* ── before/after ── */
+  .ba-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin: 16px 0; }
+  .ba-col { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: var(--shadow); min-width: 0; }
+  .ba-col h4 { padding: 8px; border-radius: 8px; text-align: center; margin: 0 0 12px; font-size: 0.95em; }
+  .ba-col.before h4 { color: #b91c1c; background: #fef2f2; }
+  .ba-col.after h4  { color: #15803d; background: #f0fdf4; }
+  .ba-col ul { margin: 0 0 0 18px; padding: 0; }
+  .ba-col ul li { margin-bottom: 6px; font-size: 0.92em; }
+
+  /* ── timeline ── */
+  .meeting-list { display: flex; flex-direction: column; gap: 10px; margin: 16px 0; }
+  .meeting-item {
+    background: var(--card); padding: 14px 18px; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    border-left: 4px solid var(--purple); display: grid; grid-template-columns: 110px minmax(0,1fr); gap: 16px; align-items: start;
+  }
+  .meeting-item .meeting-date { font-weight: 700; color: var(--purple); font-size: 0.88em; }
+  .meeting-item .meeting-title { font-weight: 600; color: var(--ink); font-size: 0.95em; }
+
+  ul.plain { padding-left: 0; list-style: none; }
+  ul.plain li { padding-left: 20px; position: relative; }
+  ul.plain li + li { margin-top: 6px; }
+  ul.plain li::before { content: "—"; position: absolute; left: 0; color: var(--orange); font-weight: 700; }
+
+  footer.colophon {
+    margin: 56px 6vw 0; padding-top: 16px; border-top: 1px solid var(--rule);
+    display: grid; grid-template-columns: 1fr auto; gap: 16px; font-size: 0.76rem;
+    text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted);
+  }
+
+  /* ── responsive ── */
+  @media (max-width: 760px) {
+    header.masthead { grid-template-columns: 1fr; padding: 32px 5vw 28px; }
+    main { grid-template-columns: 1fr; padding: 0 5vw; gap: 28px; }
+    p, p.lede, blockquote { max-width: 100%; }
+    table { font-size: 0.85rem; display: block; overflow-x: auto; }
+    footer.colophon { grid-template-columns: 1fr; gap: 6px; }
+  }
+</style>
+<script type="application/json" id="lavish-content-themes">
+[
+  {"id": "light", "label": "Light"},
+  {"id": "dark", "label": "Dark"}
+]
+</script>
+</head>
+<body>
+<header class="masthead">
+  <div>
+    <h1>The Quiet Architecture of Distinct Themes</h1>
+    <p class="subtitle">A sample brief rendered in the dbt Brief theme</p>
+    <div class="meta">
+      <span>Sample · Lavish theme library</span>
+      <span>Tier 2 · hand-built</span>
+    </div>
+  </div>
+  <div class="badge-chip">
+    <div class="chip-label">Theme</div>
+    <div class="chip-value">dbt Brief</div>
+  </div>
+</header>
+
+<main>
+  <article>
+    <p class="lede">This page renders the same comparison content as the rest of the Lavish library, restyled into a SaaS-dashboard look: gradient masthead, card grid, pill badges, gradient table header. Use it for briefs that should feel like a polished internal product page rather than a printed document.</p>
+
+    <h2 class="section-title">Three points of attention</h2>
+    <p>Look at how the body type feels at long-form length. Whether the heading hierarchy reads at a glance. How <code>inline code</code>, tables, and quotes sit inside cards.</p>
+
+    <div class="highlight-box">
+      <h4>Why this theme exists</h4>
+      <p>Captured from a rendered customer-briefing artifact: orange/purple gradient accents, rounded white cards on a soft gray paper, and pill-shaped status badges. Good for account health summaries, engagement recaps, and anything that benefits from at-a-glance status color.</p>
+    </div>
+
+    <h2 class="section-title">Status at a glance</h2>
+    <p>
+      <span class="badge green">On track</span>
+      <span class="badge yellow">Watch</span>
+      <span class="badge red">At risk</span>
+      <span class="badge blue">Informational</span>
+      <span class="badge purple">Strategic</span>
+      <span class="badge orange">Action needed</span>
+    </p>
+
+    <h3 class="subsection-title">Quick facts</h3>
+    <div class="info-grid">
+      <div class="info-row"><span class="info-label">Theme</span><span class="info-value">dbt Brief</span></div>
+      <div class="info-row"><span class="info-label">Tier</span><span class="info-value">2 — hand-built</span></div>
+      <div class="info-row"><span class="info-label">Accent</span><span class="info-value">Orange / purple gradient</span></div>
+      <div class="info-row"><span class="info-label">Best for</span><span class="info-value">Account briefs, status dashboards</span></div>
+    </div>
+
+    <h2 class="section-title">The library</h2>
+    <table>
+      <thead><tr><th>Theme</th><th>Aesthetic</th><th>Best for</th></tr></thead>
+      <tbody>
+        <tr><td>Latex</td><td>Academic paper</td><td>Long essays</td></tr>
+        <tr><td>Terminal</td><td>Monospace stationery</td><td>Postmortems, runbooks</td></tr>
+        <tr><td>Water</td><td>Neutral, auto dark/light</td><td>General briefs</td></tr>
+        <tr><td>Swiss</td><td>International typographic</td><td>Decisive briefs</td></tr>
+        <tr><td>dbt Brief</td><td>Gradient SaaS dashboard</td><td>Account / status briefs</td></tr>
+      </tbody>
+    </table>
+
+    <h2 class="section-title">Cards</h2>
+    <div class="card-grid">
+      <div class="card"><h4>Card one</h4><p>Cards carry a top accent stripe and a soft shadow — the same unit used for pillar/blueprint recommendations and engagement highlights.</p></div>
+      <div class="card"><h4>Card two</h4><p>Grid is responsive via <code>auto-fit, minmax()</code> so it degrades to a single column on narrow viewports.</p></div>
+    </div>
+
+    <h2 class="section-title">Before / after</h2>
+    <div class="ba-grid">
+      <div class="ba-col before"><h4>Before</h4><ul><li>State the pain plainly.</li><li>One line per point.</li></ul></div>
+      <div class="ba-col after"><h4>After</h4><ul><li>State the outcome plainly.</li><li>Mirror the before list 1:1.</li></ul></div>
+    </div>
+
+    <h2 class="section-title">Timeline</h2>
+    <div class="meeting-list">
+      <div class="meeting-item"><div class="meeting-date">2026-06-01</div><div class="meeting-title">Example timeline entry — purple left bar marks chronological items.</div></div>
+    </div>
+
+    <h2 class="section-title">Notes</h2>
+    <ul class="plain">
+      <li>Tier 2 themes load Google Fonts via CDN — fine when online.</li>
+      <li>This theme is JS-free like the rest of the library; the original briefing's tab-switching JS was dropped in favor of one scrollable page.</li>
+      <li>Keep section markup (<code>.section-title</code>, <code>.card</code>, <code>.badge</code>, etc.) when swapping in real content.</li>
+    </ul>
+  </article>
+
+  <aside>
+    <div class="aside-box">
+      <h3>About this template</h3>
+      <p>Captured from a dbt Labs RA customer-briefing artifact. Orange (#fd6603) → purple (#7b2de4) gradient, Inter, rounded white cards on near-white paper, pill badges for status.</p>
+    </div>
+    <div class="aside-box">
+      <h3>In one line</h3>
+      <p>Polished internal dashboard, not a printed page.</p>
+    </div>
+  </aside>
+</main>
+
+<footer class="colophon">
+  <div>Lavish theme library · tier 2</div>
+  <div>dbt Brief</div>
+</footer>
+</body>
+</html>

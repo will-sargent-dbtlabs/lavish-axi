@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="lavish-design" content="off">
+<title>dbt Brief — dashboard sample</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!--
+  dbt-brief theme, "dashboard" layout mode: the same look as dbt-brief.html,
+  restructured into a CSS-only tabbed nav (radio + label + :has(), no
+  JavaScript). Two things this pattern gets right on purpose - copy them
+  exactly when adapting this file, not the naive version:
+
+  1. Each radio lives INSIDE its own label (`<label><input>...<span>text
+     </span></label>`), sized to cover the whole label via
+     `position: absolute; inset: 0; opacity: 0;`. Do NOT hide bare radio
+     inputs as page-level siblings of nav/main with `opacity:0;
+     position:absolute` and no size tied to a label - their hit area then
+     stops matching the visible tab text, which breaks both real clicks and
+     automated (accessibility-node) clicks.
+  2. Because the radio is nested inside its label, the classic forward `~`
+     general-sibling selector can't reach the panels. This uses
+     `body:has(#tab-x:checked) #panel-x { display: block; }` instead
+     (supported in current Chromium) - one rule per panel, each panel
+     defaulting to `display: none`.
+
+  Also: close every CSS comment with `*/`, never `-->`. A stray `-->` does
+  not error - it silently makes the parser treat everything up to the next
+  real `*/` anywhere later in the file as one comment, which can delete an
+  entire feature's CSS with zero visible symptoms.
+-->
+<style>
+  :root {
+    --orange: #fd6603;
+    --purple: #7b2de4;
+    --grad: linear-gradient(135deg, var(--orange) 0%, var(--purple) 100%);
+    --paper: #f8f9fa;
+    --ink:   #2c3e50;
+    --muted: #6b7280;
+    --rule:  #f0f0f0;
+    --shadow: 0 4px 20px rgba(0,0,0,0.06);
+    --card: #fff;
+    --code-bg: #f0f0f0;
+  }
+  :root[data-lavish-content-theme="dark"] {
+    --paper: #14171c;
+    --ink:   #e8ebef;
+    --muted: #9aa3af;
+    --rule:  #2a2f38;
+    --card: #1c2027;
+    --code-bg: #262b33;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  body { padding: 0 0 60px; }
+
+  header.masthead {
+    background: var(--grad); color: white; padding: 40px 6vw 32px;
+    display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 24px; align-items: start;
+  }
+  header.masthead h1 {
+    font-weight: 800; font-size: clamp(1.7rem, 3.6vw, 2.4rem);
+    line-height: 1.15; letter-spacing: -0.01em; margin: 0 0 8px; text-wrap: balance;
+  }
+  header.masthead .subtitle { font-size: 1.05em; opacity: 0.95; font-weight: 400; margin: 0; max-width: 62ch; }
+  .badge-chip {
+    background: rgba(255,255,255,0.16); backdrop-filter: blur(8px);
+    padding: 10px 16px; border-radius: 10px; text-align: right; font-size: 0.85em; min-width: 150px;
+  }
+  .badge-chip .chip-label { opacity: 0.78; font-size: 0.82em; }
+  .badge-chip .chip-value { font-weight: 700; font-size: 1.05em; }
+
+  /* ── CSS-only tabs. See the top-of-file comment before adapting. ── */
+  nav.tab-nav {
+    background: var(--card); box-shadow: 0 2px 15px rgba(0,0,0,0.06); border-bottom: 1px solid var(--rule);
+    position: sticky; top: 0; z-index: 10;
+  }
+  nav.tab-nav .tab-nav-inner { display: flex; flex-wrap: wrap; padding: 0 5vw; }
+  label.tab-item {
+    position: relative; display: flex; align-items: center; gap: 7px; padding: 15px 16px;
+    color: var(--muted); font-weight: 600; font-size: 0.85em; cursor: pointer;
+    border-bottom: 3px solid transparent; white-space: nowrap; user-select: none;
+  }
+  label.tab-item:hover { color: var(--orange); background: #fff7f0; }
+  label.tab-item input.tab-radio {
+    position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; appearance: none;
+  }
+
+  main.tab-panels { padding: 32px 5vw 0; }
+  .tab-panel { display: none; }
+
+  body:has(#tab-overview:checked) label[data-tab="overview"],
+  body:has(#tab-library:checked) label[data-tab="library"],
+  body:has(#tab-compare:checked) label[data-tab="compare"],
+  body:has(#tab-notes:checked) label[data-tab="notes"] {
+    color: var(--orange); border-bottom-color: var(--orange); background: #fff7f0;
+  }
+  body:has(#tab-overview:checked) #panel-overview,
+  body:has(#tab-library:checked) #panel-library,
+  body:has(#tab-compare:checked) #panel-compare,
+  body:has(#tab-notes:checked) #panel-notes {
+    display: block;
+  }
+
+  h2.section-title {
+    font-size: 1.55em; color: var(--ink); margin: 0 0 4px 0; font-weight: 700;
+    padding-bottom: 10px; border-bottom: 3px solid var(--orange);
+  }
+  p { margin: 0 0 0.8em; max-width: 80ch; }
+  p.lede { font-size: 1.12rem; line-height: 1.5; font-weight: 500; color: var(--ink); }
+  p.lede::first-letter { color: var(--orange); font-weight: 800; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.88em; padding: 1px 6px; background: var(--code-bg); border: 1px solid #e5e5e5; border-radius: 4px; overflow-wrap: anywhere; word-break: break-word; }
+  blockquote { margin: 0.6em 0; padding: 16px 0 16px 22px; border-left: 4px solid var(--purple); font-weight: 500; font-size: 1.15rem; line-height: 1.35; color: var(--ink); }
+
+  .highlight-box {
+    background: linear-gradient(135deg, rgba(253,102,3,0.05) 0%, rgba(123,45,228,0.05) 100%);
+    border-left: 4px solid var(--orange); padding: 18px 22px; border-radius: 10px; margin: 14px 0;
+  }
+  .highlight-box h4 { color: var(--orange); margin: 0 0 8px; font-size: 1em; font-weight: 700; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.92rem; background: var(--card); box-shadow: var(--shadow); border-radius: 12px; overflow: hidden; margin: 8px 0; }
+  thead { background: var(--grad); color: white; }
+  th { padding: 12px 16px; text-align: left; font-weight: 600; font-size: 0.85em; }
+  td { padding: 12px 16px; border-bottom: 1px solid var(--rule); }
+  tr:last-child td { border-bottom: none; }
+
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 14px 0; }
+  .card { background: var(--card); padding: 20px; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--rule); border-top: 4px solid var(--orange); min-width: 0; }
+  .card h4 { color: var(--orange); margin: 0 0 8px; font-size: 1em; }
+  .card p { color: var(--ink); font-size: 0.92em; max-width: none; }
+
+  .ba-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 14px 0; }
+  .ba-col { background: var(--card); padding: 18px; border-radius: 12px; box-shadow: var(--shadow); min-width: 0; }
+  .ba-col h4 { padding: 8px; border-radius: 8px; text-align: center; margin: 0 0 12px; font-size: 0.92em; }
+  .ba-col.before h4 { color: #b91c1c; background: #fef2f2; }
+  .ba-col.after h4  { color: #15803d; background: #f0fdf4; }
+  .ba-col ul { margin: 0; padding: 0 0 0 18px; }
+
+  ul.plain { padding-left: 0; list-style: none; margin: 0.6em 0; }
+  ul.plain li { padding-left: 20px; position: relative; margin-bottom: 6px; }
+  ul.plain li::before { content: "—"; position: absolute; left: 0; color: var(--orange); font-weight: 700; }
+
+  footer.colophon {
+    margin: 40px 5vw 0; padding-top: 16px; border-top: 1px solid var(--rule);
+    display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 16px; font-size: 0.74rem; color: var(--muted);
+  }
+
+  @media (max-width: 760px) {
+    header.masthead { grid-template-columns: 1fr; padding: 32px 5vw 24px; }
+    main.tab-panels { padding: 24px 5vw 0; }
+    table { font-size: 0.85rem; display: block; overflow-x: auto; }
+    footer.colophon { grid-template-columns: 1fr; gap: 6px; }
+  }
+
+  /* Printing only the checked tab would silently drop the other panels -
+     every CSS-only-tabs artifact must override .tab-panel's display:none
+     here so print/Save-as-PDF shows every tab, not just whichever was open. */
+  @media print {
+    nav.tab-nav { display: none; }
+    .tab-panel { display: block !important; page-break-after: always; }
+    .tab-panel:last-of-type { page-break-after: auto; }
+  }
+</style>
+<script type="application/json" id="lavish-content-themes">
+[
+  {"id": "light", "label": "Light"},
+  {"id": "dark", "label": "Dark"}
+]
+</script>
+</head>
+<body>
+
+<header class="masthead">
+  <div>
+    <h1>The Quiet Architecture of Distinct Themes</h1>
+    <p class="subtitle">dbt Brief, dashboard layout mode — the same theme as dbt-brief.html, split into tabs instead of one scroll.</p>
+  </div>
+  <div class="badge-chip"><div class="chip-label">Theme</div><div class="chip-value">dbt Brief · Dashboard</div></div>
+</header>
+
+<nav class="tab-nav">
+  <div class="tab-nav-inner">
+    <label class="tab-item" data-tab="overview"><input type="radio" name="tabs" id="tab-overview" class="tab-radio" checked><span>Overview</span></label>
+    <label class="tab-item" data-tab="library"><input type="radio" name="tabs" id="tab-library" class="tab-radio"><span>The Library</span></label>
+    <label class="tab-item" data-tab="compare"><input type="radio" name="tabs" id="tab-compare" class="tab-radio"><span>Cards &amp; Comparison</span></label>
+    <label class="tab-item" data-tab="notes"><input type="radio" name="tabs" id="tab-notes" class="tab-radio"><span>Notes</span></label>
+  </div>
+</nav>
+
+<main class="tab-panels">
+
+  <section class="tab-panel" id="panel-overview">
+    <h2 class="section-title">Overview</h2>
+    <p class="lede">This page renders the same comparison content as the rest of the Lavish library, split across tabs instead of one long scroll. Use dashboard mode for briefs with several genuinely distinct sections the user will jump between rather than read start to finish.</p>
+    <div class="highlight-box">
+      <h4>Why this theme exists</h4>
+      <p>Captured from a rendered customer-briefing artifact: orange/purple gradient accents, rounded white cards on a soft gray paper, pill-shaped status badges, and - in this variant - CSS-only tabs. Good for account health dashboards, engagement recaps, and anything that benefits from at-a-glance status color plus section navigation.</p>
+    </div>
+    <blockquote>Design is the rendering of intent. Or, less grandly: the choices you make until the page stops fighting you.</blockquote>
+  </section>
+
+  <section class="tab-panel" id="panel-library">
+    <h2 class="section-title">The Library</h2>
+    <p>Look at how a table reads inside this theme's gradient header treatment.</p>
+    <table>
+      <thead><tr><th>Theme</th><th>Aesthetic</th><th>Best for</th></tr></thead>
+      <tbody>
+        <tr><td>Latex</td><td>Academic paper</td><td>Long essays</td></tr>
+        <tr><td>Terminal</td><td>Monospace stationery</td><td>Postmortems, runbooks</td></tr>
+        <tr><td>Water</td><td>Neutral, auto dark/light</td><td>General briefs</td></tr>
+        <tr><td>Swiss</td><td>International typographic</td><td>Decisive briefs</td></tr>
+        <tr><td>dbt Brief</td><td>Gradient SaaS dashboard</td><td>Account / status briefs</td></tr>
+      </tbody>
+    </table>
+    <ul class="plain">
+      <li>Tier 2 themes load Google Fonts via CDN — fine when online.</li>
+      <li>This dashboard variant is still JS-free; only CSS drives the tab switching.</li>
+    </ul>
+  </section>
+
+  <section class="tab-panel" id="panel-compare">
+    <h2 class="section-title">Cards &amp; Comparison</h2>
+    <div class="card-grid">
+      <div class="card"><h4>Card one</h4><p>Cards carry a top accent stripe and a soft shadow — the unit used for pillar/blueprint recommendations and engagement highlights.</p></div>
+      <div class="card"><h4>Card two</h4><p>Grid is responsive via <code>auto-fit, minmax()</code> so it degrades to a single column on narrow viewports.</p></div>
+    </div>
+    <div class="ba-grid">
+      <div class="ba-col before"><h4>Before</h4><ul><li>State the pain plainly.</li><li>One line per point.</li></ul></div>
+      <div class="ba-col after"><h4>After</h4><ul><li>State the outcome plainly.</li><li>Mirror the before list 1:1.</li></ul></div>
+    </div>
+  </section>
+
+  <section class="tab-panel" id="panel-notes">
+    <h2 class="section-title">Notes</h2>
+    <ul class="plain">
+      <li>Nest each tab's radio inside its own label; size the input to cover the label with <code>position: absolute; inset: 0; opacity: 0;</code>.</li>
+      <li>Use <code>body:has(#tab-x:checked) #panel-x</code> to show panels — not a forward <code>~</code> sibling selector, which can't reach past the label boundary.</li>
+      <li>Close every CSS comment with <code>*/</code>. A stray <code>--&gt;</code> silently comments out everything until the next real <code>*/</code>.</li>
+      <li>Re-verify inside an actual Lavish session, not just the raw file — the artifact iframe is sandboxed (no <code>allow-same-origin</code>), so page-level script cannot reach in, but real and automated clicks against the page tree still work correctly.</li>
+    </ul>
+  </section>
+
+</main>
+
+<footer class="colophon">
+  <div>Lavish theme library · tier 2 · dashboard variant</div>
+  <div>dbt Brief · Dashboard</div>
+</footer>
+
+</body>
+</html>

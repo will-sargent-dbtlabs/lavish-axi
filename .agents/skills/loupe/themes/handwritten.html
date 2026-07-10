@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="lavish-design" content="off">
+<title>Handwritten — sample</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;700&family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #fffbf0;
+    --ruling: #b8d4e3;
+    --margin: #c93232;
+    --ink: #2a2e35;
+    --pencil: #50525a;
+    --tape: #f7e9a0;
+    --note: #fff79a;
+  }
+  :root[data-lavish-content-theme="dark"] {
+    --paper: #1e1c18;
+    --ruling: #3a4a54;
+    --margin: #d94f4f;
+    --ink: #ece6d8;
+    --pencil: #a9a49b;
+    --tape: #4a4128;
+    --note: #5c4f1e;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink); }
+  body {
+    font-family: "Caveat", "Patrick Hand", "Comic Sans MS", cursive;
+    font-size: 24px; line-height: 36px;
+    background-image:
+      linear-gradient(90deg, transparent 84px, var(--margin) 84px, var(--margin) 86px, transparent 86px),
+      repeating-linear-gradient(to bottom, transparent 0, transparent 35px, var(--ruling) 35px, var(--ruling) 36px);
+    min-height: 100vh;
+    padding: 36px 36px 72px 108px;
+  }
+  @media (max-width: 540px) {
+    body { padding-left: 96px; font-size: 21px; line-height: 32px;
+      background-image:
+        linear-gradient(90deg, transparent 72px, var(--margin) 72px, var(--margin) 73px, transparent 73px),
+        repeating-linear-gradient(to bottom, transparent 0, transparent 31px, var(--ruling) 31px, var(--ruling) 32px);
+    }
+    h1 { font-size: 36px; line-height: 48px; }
+  }
+  @media (max-width: 400px) {
+    body { padding-left: 72px;
+      background-image:
+        linear-gradient(90deg, transparent 56px, var(--margin) 56px, var(--margin) 57px, transparent 57px),
+        repeating-linear-gradient(to bottom, transparent 0, transparent 31px, var(--ruling) 31px, var(--ruling) 32px);
+    }
+  }
+  h1 {
+    font-family: "Permanent Marker", "Caveat", cursive;
+    font-weight: 400; font-size: 56px; line-height: 72px;
+    margin: 0 0 12px; color: var(--ink); transform: rotate(-1deg);
+  }
+  .subtitle { font-size: 22px; color: var(--pencil); margin: 0 0 36px; font-style: italic; }
+  h2 {
+    font-family: "Permanent Marker", "Caveat", cursive;
+    font-weight: 400; font-size: 34px; line-height: 36px;
+    margin: 36px 0 8px; color: var(--ink); display: inline-block;
+    border-bottom: 3px solid var(--ink); padding-bottom: 2px;
+    transform: rotate(-0.5deg);
+  }
+  p { margin: 0 0 36px; max-width: 56ch; }
+  strong { font-weight: 700; background: linear-gradient(transparent 55%, rgba(255, 220, 90, 0.7) 55%); padding: 0 2px; }
+  em { color: var(--pencil); }
+  code { font-family: "Patrick Hand", monospace; font-size: 0.95em; background: rgba(0,0,0,0.05); padding: 0 6px; border-radius: 2px; overflow-wrap: anywhere; word-break: break-word; }
+  blockquote {
+    position: relative; background: var(--note);
+    padding: 18px 22px; margin: 36px 0 36px 24px; max-width: 50ch;
+    box-shadow: 2px 4px 0 rgba(0,0,0,0.08), 0 8px 20px -10px rgba(0,0,0,0.18);
+    transform: rotate(-1.2deg);
+    font-size: 22px; line-height: 30px; color: var(--ink);
+  }
+  blockquote::before {
+    content: ""; position: absolute; top: -10px; left: 40%;
+    width: 70px; height: 22px; background: var(--tape);
+    transform: rotate(-3deg);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    opacity: 0.85;
+  }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 36px; font-size: 21px; }
+  th, td { padding: 4px 12px 4px 0; text-align: left; border-bottom: 2px dashed var(--ink); }
+  th { font-family: "Permanent Marker", cursive; font-weight: 400; font-size: 19px; letter-spacing: 0.04em; }
+  pre {
+    font-family: "Patrick Hand", monospace; font-size: 20px; line-height: 28px;
+    background: rgba(0,0,0,0.04); border: 2px solid var(--ink);
+    padding: 14px 18px; margin: 0 0 36px; overflow-x: auto;
+    transform: rotate(-0.3deg);
+  }
+  ul { list-style: none; padding: 0; margin: 0 0 36px; }
+  ul li { padding-left: 28px; position: relative; }
+  ul li::before { content: "✓"; position: absolute; left: 0; color: var(--margin); font-weight: 700; }
+  .signature { margin-top: 48px; font-family: "Caveat", cursive; font-size: 26px; color: var(--pencil); font-style: italic; }
+  .signature::before { content: "— "; }
+
+  @media (max-width: 540px) {
+    h1 { font-size: 36px; line-height: 48px; }
+    h2 { font-size: 28px; line-height: 32px; }
+    blockquote { max-width: 100%; margin-left: 0; font-size: 20px; line-height: 28px; }
+    table { display: block; overflow-x: auto; max-width: 100%; }
+    pre { overflow-x: auto; max-width: 100%; }
+  }
+  @media (max-width: 400px) {
+    h1 { font-size: 30px; line-height: 40px; }
+  }
+</style>
+<script type="application/json" id="lavish-content-themes">
+[
+  {"id": "light", "label": "Light"},
+  {"id": "dark", "label": "Dark"}
+]
+</script>
+</head>
+<body>
+<h1>The Quiet Architecture of Distinct Themes</h1>
+<p class="subtitle">A canonical sample for the Lavish theme library</p>
+
+<p>This page renders the same content under every theme in the Lavish library. Use it to pick the look that fits the work, then publish or open accordingly. Each theme is <strong>self-contained</strong> — one stylesheet, no JavaScript, no build step.</p>
+
+<h2>Three things to look at</h2>
+<p>How the body type feels at long-form length. Whether the heading hierarchy reads at a glance. And how <code>inline code</code>, tables, and quotes sit inside prose.</p>
+
+<h2>A quote</h2>
+<blockquote>Design is the rendering of intent. Or, less grandly: the choices you make until the page stops fighting you.</blockquote>
+
+<h2>The library</h2>
+<table>
+  <thead><tr><th>Theme</th><th>Aesthetic</th><th>Best for</th></tr></thead>
+  <tbody>
+    <tr><td>Tufte</td><td>Editorial with margin notes</td><td>Long essays</td></tr>
+    <tr><td>Terminal</td><td>Monospace stationery</td><td>Postmortems, runbooks</td></tr>
+    <tr><td>Water</td><td>Neutral, auto dark/light</td><td>General briefs</td></tr>
+    <tr><td>Handwritten</td><td>Lined paper + Caveat</td><td>Personal notes</td></tr>
+  </tbody>
+</table>
+
+<h2>A code block</h2>
+<pre>function pick(theme) {
+  return themes[theme] ?? themes.default;
+}</pre>
+
+<h2>Notes to self</h2>
+<ul>
+  <li>Tier 1 imports drop in via CDN link.</li>
+  <li>Tier 2 hand-builds inline their styles.</li>
+  <li>The gallery iframes each so styles never collide.</li>
+</ul>
+
+<p class="signature">Lavish design library</p>
+</body>
+</html>

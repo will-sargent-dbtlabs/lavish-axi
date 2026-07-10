@@ -381,12 +381,14 @@ test("chrome keeps the editor usable on narrow screens", async () => {
   assert.match(css, /grid-template-rows:minmax\(0,1fr\) min\(42vh,360px\)/);
 });
 
-test("chrome top bar follows the design mock wordmark and overflow menu treatment", async () => {
+test("chrome top bar renders the co-brand lockup and overflow menu treatment", async () => {
   const html = createChromeHtml({ key: "abc", file: "/tmp/artifact.html" });
   const css = await chromeCssSource();
 
   assert.match(html, /class="brand-mark">Loupe/);
-  assert.match(html, /<div class="brand"><svg[^>]*aria-hidden="true"[^>]*><circle/);
+  assert.match(html, /<div class="brand"><span class="cobrand" role="img" aria-label="Fivetran \+ dbt Labs">/);
+  assert.match(html, /<svg class="cb-white" aria-hidden="true" focusable="false" viewBox="0 0 127 62"/);
+  assert.match(html, /<svg class="cb-color" aria-hidden="true" focusable="false" viewBox="0 0 127 62"/);
   assert.match(css, /font-family:var\(--font-serif\)/);
   assert.match(css, /letter-spacing:\.18em/);
   assert.match(html, /class="more-button" id="moreButton"/);
@@ -862,10 +864,10 @@ test("chrome overflow menu includes a Print / Save PDF action", () => {
   assert.match(html, /Print \/ Save PDF/);
 });
 
-test("createChromeHtml defaults to the lavish-light theme", () => {
+test("createChromeHtml defaults to the midnight theme", () => {
   const html = createChromeHtml({ key: "abc", file: "/tmp/artifact.html" });
-  assert.match(html, /<html data-lavish-theme="lavish-light">/);
-  assert.match(html, /"theme":"lavish-light"/);
+  assert.match(html, /<html data-lavish-theme="midnight">/);
+  assert.match(html, /"theme":"midnight"/);
 });
 
 test("createChromeHtml renders the requested theme", () => {
@@ -912,7 +914,7 @@ test("the export button requests a content export from the artifact", async () =
   assert.match(client, /postToFrame\(\{ type: "lavish:requestContentExport" \}\)/);
 });
 
-test("a session defaults to the lavish-light theme end-to-end", async () => {
+test("a session defaults to the midnight theme end-to-end", async () => {
   const dir = await mkdtemp(path.join(tmpdir(), "lavish-serve-"));
   const artifact = path.join(dir, "artifact.html");
   await writeFile(artifact, "<!doctype html><html><body></body></html>");
@@ -925,7 +927,7 @@ test("a session defaults to the lavish-light theme end-to-end", async () => {
     });
     const body = await res.json();
     const chrome = await (await fetch(body.url)).text();
-    assert.match(chrome, /<html data-lavish-theme="lavish-light">/);
+    assert.match(chrome, /<html data-lavish-theme="midnight">/);
   } finally {
     await server.close();
     await rm(dir, { recursive: true, force: true });
@@ -967,7 +969,7 @@ test("an invalid theme in the session request is ignored, falling back to the de
     const body = await res.json();
     assert.doesNotMatch(body.url, /[?&]theme=/);
     const chrome = await (await fetch(body.url)).text();
-    assert.match(chrome, /<html data-lavish-theme="lavish-light">/);
+    assert.match(chrome, /<html data-lavish-theme="midnight">/);
   } finally {
     await server.close();
     await rm(dir, { recursive: true, force: true });

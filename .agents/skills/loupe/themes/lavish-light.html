@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="lavish-design" content="off">
+<title>Lavish Light — sample</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Inter+Tight:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #fcfcfa;
+    --ink:   #2b2b2b;
+    --red:   #e30613;
+    --rule:  #d6d6d0;   /* hairline rules */
+    --line:  #2b2b2b;   /* the few structural rules we keep */
+    --muted: #6b6b66;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
+    font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 17px; line-height: 1.55; -webkit-font-smoothing: antialiased;
+    font-feature-settings: "ss01", "cv11"; }
+  body { padding: 56px 6vw 96px; max-width: 1120px; margin: 0 auto; }
+  header.masthead {
+    display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: end;
+    border-bottom: 2px solid var(--line); padding-bottom: 18px; margin-bottom: 36px;
+  }
+  header.masthead h1 {
+    font-family: "Inter Tight", "Inter", sans-serif;
+    font-weight: 900; font-size: clamp(2.2rem, 6vw, 4.5rem);
+    line-height: 0.95; letter-spacing: -0.025em; margin: 0;
+    text-wrap: balance;
+  }
+  header.masthead .meta {
+    font-size: 0.8rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.16em;
+    color: var(--muted); text-align: right;
+  }
+  header.masthead .meta strong { color: var(--red); display: block; font-weight: 700; }
+  main { display: grid; grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); gap: 56px; align-items: start; }
+  article > * + * { margin-top: 1.1em; }
+  aside { font-size: 0.92rem; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 14px; }
+  aside h3 { font-family: "Inter Tight", sans-serif; font-weight: 900; font-size: 0.78rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink); margin: 0 0 8px; }
+  h2 {
+    font-family: "Inter Tight", sans-serif;
+    font-weight: 900; font-size: 1.45rem; line-height: 1.1; letter-spacing: -0.01em;
+    margin: 2.4em 0 0.6em; padding-bottom: 8px; border-bottom: 1px solid var(--rule);
+    text-transform: uppercase;
+  }
+  h2::before { content: ""; display: inline-block; width: 14px; height: 14px; background: var(--red); margin-right: 12px; vertical-align: 1px; }
+  p { margin: 0; max-width: 64ch; }
+  p.lede { font-size: 1.25rem; line-height: 1.4; font-weight: 500; max-width: 56ch; }
+  p.lede::first-letter { color: var(--red); font-weight: 900; }
+  strong { font-weight: 700; }
+  em { font-style: italic; color: var(--ink); }
+  code { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em; padding: 1px 6px; background: #f0efe9; border: 1px solid #e3e2dc; overflow-wrap: anywhere; word-break: break-word; }
+  pre code { background: transparent; border: 0; padding: 0; color: inherit; font-size: inherit; }
+  blockquote {
+    margin: 0; padding: 14px 0 14px 22px;
+    border-left: 4px solid var(--red);
+    font-family: "Inter Tight", sans-serif; font-weight: 500;
+    font-size: 1.35rem; line-height: 1.3; max-width: 50ch;
+  }
+  table {
+    width: 100%; border-collapse: collapse; font-size: 0.95rem;
+    border-top: 2px solid var(--line); border-bottom: 2px solid var(--line);
+  }
+  th, td { padding: 10px 14px 10px 0; text-align: left; vertical-align: top; border-bottom: 1px solid #d8d7d2; }
+  th { font-family: "Inter Tight", sans-serif; font-weight: 900; font-size: 0.78rem; letter-spacing: 0.16em; text-transform: uppercase; }
+  pre { background: #f2f1ec; color: var(--ink); border: 1px solid #e3e2dc; padding: 16px 18px; font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.9rem; line-height: 1.45; overflow-x: auto; }
+  ul { padding-left: 0; list-style: none; }
+  ul li { padding-left: 24px; position: relative; }
+  ul li + li { margin-top: 8px; }
+  ul li::before { content: "—"; position: absolute; left: 0; color: var(--red); font-weight: 700; }
+  footer.colophon {
+    margin-top: 64px; padding-top: 18px; border-top: 2px solid var(--line);
+    display: grid; grid-template-columns: 1fr auto; gap: 16px; font-size: 0.78rem;
+    text-transform: uppercase; letter-spacing: 0.16em; color: var(--muted);
+  }
+
+  /* ── Mobile responsive ── */
+  @media (max-width: 720px) {
+    body { padding: 28px 5vw 56px; overflow-x: hidden; }
+
+    header.masthead {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    header.masthead .meta {
+      text-align: left;
+    }
+
+    main { grid-template-columns: 1fr; gap: 32px; }
+
+    p { max-width: 100%; }
+    p.lede { font-size: 1.1rem; max-width: 100%; }
+
+    blockquote { font-size: 1.1rem; max-width: 100%; }
+
+    table { font-size: 0.85rem; display: block; overflow-x: auto; width: 100%; }
+    th, td { padding: 8px 10px 8px 0; }
+
+    pre { overflow-x: auto; max-width: 100%; }
+
+    footer.colophon {
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+  }
+</style>
+<style>
+  :root[data-lavish-content-theme="swiss"] {
+    --paper: #fafaf7;
+    --ink:   #0a0a0a;
+    --red:   #e30613;
+    --rule:  #0a0a0a;
+    --line:  #0a0a0a;
+    --muted: #5a5a55;
+  }
+  :root[data-lavish-content-theme="dark"] {
+    --paper: #16171b;
+    --ink:   #ececea;
+    --red:   #e30613;
+    --rule:  #35363c;
+    --line:  #35363c;
+    --muted: #9b9a95;
+  }
+  /* code/pre use a hardcoded light background elsewhere in this file, which
+     would put light --ink text on a light background under the dark theme. */
+  [data-lavish-content-theme="dark"] code,
+  [data-lavish-content-theme="dark"] pre {
+    background: #1e1f24;
+    border-color: #35363c;
+  }
+</style>
+<script type="application/json" id="lavish-content-themes">
+[
+  {"id": "lavish-light", "label": "Lavish Light"},
+  {"id": "swiss", "label": "Swiss"},
+  {"id": "dark", "label": "Dark"}
+]
+</script>
+</head>
+<body>
+<header class="masthead">
+  <h1>The Quiet Architecture of Distinct Themes</h1>
+  <div class="meta">
+    <strong>Sample 06 / 07</strong>
+    Lavish theme library
+  </div>
+</header>
+
+<main>
+  <article>
+    <p class="lede">This page renders the same content under every theme in the Lavish library. Use it to pick the look that fits the work, then publish or open accordingly. Each theme is self-contained &mdash; one stylesheet, no JavaScript, no build step.</p>
+
+    <h2>Three points of attention</h2>
+    <p>Look at how the body type feels at long-form length. Whether the heading hierarchy reads at a glance. How <code>inline code</code>, tables, and quotes sit inside prose.</p>
+
+    <h2>On intent</h2>
+    <blockquote>Design is the rendering of intent. Or, less grandly: the choices you make until the page stops fighting you.</blockquote>
+
+    <h2>The library</h2>
+    <table>
+      <thead><tr><th>Theme</th><th>Aesthetic</th><th>Best for</th></tr></thead>
+      <tbody>
+        <tr><td>Tufte</td><td>Editorial with margin notes</td><td>Long essays</td></tr>
+        <tr><td>Terminal</td><td>Monospace stationery</td><td>Postmortems, runbooks</td></tr>
+        <tr><td>Water</td><td>Neutral, auto dark/light</td><td>General briefs</td></tr>
+        <tr><td>Swiss</td><td>International typographic</td><td>Decisive briefs</td></tr>
+      </tbody>
+    </table>
+
+    <h2>A sample</h2>
+    <pre><code>function pick(theme) {
+  return themes[theme] ?? themes.default;
+}</code></pre>
+
+    <h2>Notes</h2>
+    <ul>
+      <li>Tier 1 imports drop in via CDN link.</li>
+      <li>Tier 2 hand-builds inline their styles.</li>
+      <li>The gallery iframes each so styles never collide.</li>
+    </ul>
+  </article>
+
+  <aside>
+    <h3>About this template</h3>
+    <p>Softened Swiss. The same typographic grid, but dark&#8209;gray ink on near&#8209;white, hairline rules, and a light code block instead of solid black. The single red accent stays.</p>
+    <h3 style="margin-top: 20px;">In one line</h3>
+    <p>Decisive and plain &mdash; easy on the eyes.</p>
+  </aside>
+</main>
+
+<footer class="colophon">
+  <div>Lavish design library &nbsp;·&nbsp; tier&nbsp;2</div>
+  <div>Lavish Light</div>
+</footer>
+</body>
+</html>
